@@ -1,0 +1,45 @@
+{
+  "mode": "parallel",
+  "calls": [
+    {
+      "agent": "profile",
+      "skill_id": "get_employee_onboarding_profile",
+      "request": {
+        "schema_version": "1.0",
+        "operation": "GENERATE_PLAN",
+        "request_id": "req-001",
+        "run_id": "run-001",
+        "correlation_id": "corr-001",
+        "employee_id": "emp-123",
+        "onboarding_id": "onb-123",
+        "idempotency_key": "onb-123:generate:profile:v1",
+        "payload": {
+          "role": "Frontend Developer",
+          "department": "Engineering",
+          "start_date": "2026-08-03"
+        }
+      }
+    },
+    {
+      "agent": "knowledge",
+      "skill_id": "get_role_onboarding_requirements",
+      "request": {
+        "schema_version": "1.0",
+        "operation": "GENERATE_PLAN",
+        "request_id": "req-001",
+        "run_id": "run-001",
+        "correlation_id": "corr-001",
+        "employee_id": "emp-123",
+        "onboarding_id": "onb-123",
+        "idempotency_key": "onb-123:generate:knowledge:v1",
+        "payload": {
+          "role": "Frontend Developer",
+          "department": "Engineering",
+          "location": "Morocco",
+          "employment_type": "FULL_TIME",
+          "onboarding_scope": "30_DAY_PLAN"
+        }
+      }
+    }
+  ]
+}

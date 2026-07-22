@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Employee Profile Context Data",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "employee": {"type": "object"},
+    "organization": {"type": "object"},
+    "skills": {"type": "array", "items": {"type": "object"}},
+    "experience": {"type": "array", "items": {"type": "object"}},
+    "education": {"type": "array", "items": {"type": "object"}},
+    "certifications": {"type": "array", "items": {"type": "object"}},
+    "profile_completeness": {"type": "object"},
+    "onboarding_constraints": {"type": "array", "items": {"type": "object"}},
+    "source_references": {"type": "array", "items": {"type": "object"}}
+  }
+}

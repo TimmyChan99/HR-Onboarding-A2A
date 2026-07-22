@@ -1,0 +1,24 @@
+{
+  "message": {
+    "role": "ROLE_USER",
+    "messageId": "msg-001",
+    "contextId": "corr-001",
+    "parts": [
+      {
+        "data": {
+          "skill_id": "get_employee_onboarding_profile",
+          "request": {
+            "schema_version": "1.0",
+            "operation": "GENERATE_PLAN",
+            "request_id": "req-001",
+            "run_id": "run-001",
+            "correlation_id": "corr-001",
+            "employee_id": "emp-123",
+            "payload": {}
+          }
+        },
+        "mediaType": "application/json"
+      }
+    ]
+  }
+}

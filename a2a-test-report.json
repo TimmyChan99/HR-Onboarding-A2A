@@ -1,0 +1,173 @@
+{
+  "base_url": "http://localhost:8080",
+  "generated_at_epoch": 1784755830,
+  "summary": {
+    "total": 27,
+    "passed": 5,
+    "failed": 22
+  },
+  "results": [
+    {
+      "name": "health endpoint",
+      "passed": true,
+      "duration_ms": 14,
+      "detail": ""
+    },
+    {
+      "name": "readiness endpoint",
+      "passed": true,
+      "duration_ms": 2,
+      "detail": ""
+    },
+    {
+      "name": "public Agent Cards and skills",
+      "passed": true,
+      "duration_ms": 6,
+      "detail": ""
+    },
+    {
+      "name": "protected endpoint rejects missing key",
+      "passed": true,
+      "duration_ms": 1,
+      "detail": ""
+    },
+    {
+      "name": "protected endpoint rejects bad key",
+      "passed": true,
+      "duration_ms": 1,
+      "detail": ""
+    },
+    {
+      "name": "Profile Agent success",
+      "passed": false,
+      "duration_ms": 1,
+      "detail": "HTTP 401: {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "Knowledge Agent success",
+      "passed": false,
+      "duration_ms": 1,
+      "detail": "HTTP 401: {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "Planning generate success",
+      "passed": false,
+      "duration_ms": 1,
+      "detail": "HTTP 401: {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "GENERATE_PLAN stage 1 parallel",
+      "passed": false,
+      "duration_ms": 1,
+      "detail": "HTTP 401: {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "ANSWER_QUESTION Profile+Knowledge parallel",
+      "passed": false,
+      "duration_ms": 1,
+      "detail": "HTTP 401: {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "REVISE_PLAN Planning success",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "ADAPT_PLAN Planning success",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "Plan explanation success",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "unsupported skill rejected",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "HTTP 401: {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "Profile missing employee_id -> INPUT_REQUIRED",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "Knowledge missing query -> INPUT_REQUIRED",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "Generate missing knowledge context -> INPUT_REQUIRED",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "Revise missing plan/instructions -> INPUT_REQUIRED",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "Adapt missing trigger -> INPUT_REQUIRED",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "Explain missing question -> INPUT_REQUIRED",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "invalid operation -> HTTP 422",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "expected 422, got 401"
+    },
+    {
+      "name": "empty calls -> HTTP 422",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "expected 422, got 401"
+    },
+    {
+      "name": "retryable 503 recovers on second attempt",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "retry did not recover: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "PARTIAL_SUCCESS result completes with warning",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "domain FAILED result -> task FAILED",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "malformed Langflow output -> task FAILED",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    },
+    {
+      "name": "wrong artifact type -> task FAILED",
+      "passed": false,
+      "duration_ms": 0,
+      "detail": "unexpected: 401 {'type': 'https://a2a-protocol.org/errors/unauthorized', 'title': 'Unauthorized', 'status': 401, 'detail': 'Missing or invalid X-A2A-API-Key header'}"
+    }
+  ]
+}

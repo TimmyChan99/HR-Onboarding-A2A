@@ -1,0 +1,21 @@
+server {
+    listen 443 ssl http2;
+    server_name a2a-onboarding.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/a2a-onboarding.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/a2a-onboarding.example.com/privkey.pem;
+
+    client_max_body_size 2m;
+    proxy_connect_timeout 10s;
+    proxy_read_timeout 300s;
+    proxy_send_timeout 300s;
+
+    location / {
+        proxy_pass http://a2a-service:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Request-ID $request_id;
+    }
+}

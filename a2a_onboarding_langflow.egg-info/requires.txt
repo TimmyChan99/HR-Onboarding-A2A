@@ -1,0 +1,16 @@
+a2a-sdk[http-server,sqlite]==1.1.2
+aiosqlite<1,>=0.20
+fastapi<1,>=0.115
+httpx<1,>=0.27
+pydantic<3,>=2.8
+pydantic-settings<3,>=2.4
+sqlalchemy<3,>=2.0
+starlette<1,>=0.40
+uvicorn[standard]<1,>=0.30
+
+[dev]
+pytest<9,>=8
+pytest-asyncio<1,>=0.24
+respx<1,>=0.21
+ruff<1,>=0.6
+mypy<2,>=1.11

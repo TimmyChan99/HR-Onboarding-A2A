@@ -1,0 +1,43 @@
+{
+  "mode": "parallel",
+  "calls": [
+    {
+      "agent": "profile",
+      "skill_id": "get_employee_onboarding_profile",
+      "request": {
+        "schema_version": "1.0",
+        "operation": "ANSWER_QUESTION",
+        "request_id": "req-question-001",
+        "run_id": "run-question-001",
+        "correlation_id": "corr-question-001",
+        "employee_id": "emp-123",
+        "onboarding_id": "onb-123",
+        "idempotency_key": "onb-123:question:profile:001",
+        "payload": {
+          "question": "Which mandatory training applies to this employee?"
+        }
+      }
+    },
+    {
+      "agent": "knowledge",
+      "skill_id": "answer_onboarding_question",
+      "request": {
+        "schema_version": "1.0",
+        "operation": "ANSWER_QUESTION",
+        "request_id": "req-question-001",
+        "run_id": "run-question-001",
+        "correlation_id": "corr-question-001",
+        "employee_id": "emp-123",
+        "onboarding_id": "onb-123",
+        "idempotency_key": "onb-123:question:knowledge:001",
+        "payload": {
+          "question": "Which mandatory training applies to a hybrid frontend developer in Engineering?",
+          "role": "Frontend Developer",
+          "department": "Engineering",
+          "employment_type": "FULL_TIME",
+          "work_mode": "HYBRID"
+        }
+      }
+    }
+  ]
+}

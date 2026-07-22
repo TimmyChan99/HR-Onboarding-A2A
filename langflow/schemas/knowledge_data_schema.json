@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Onboarding Knowledge Evidence Data",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "answer": {"type": ["string", "null"]},
+    "requirements": {"type": "array", "items": {"type": "object"}},
+    "mandatory_training": {"type": "array", "items": {"type": "object"}},
+    "procedures": {"type": "array", "items": {"type": "object"}},
+    "tools": {"type": "array", "items": {"type": "object"}},
+    "contacts": {"type": "array", "items": {"type": "object"}},
+    "sources": {"type": "array", "items": {"type": "object"}},
+    "unresolved_questions": {"type": "array", "items": {"type": "string"}},
+    "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+  }
+}

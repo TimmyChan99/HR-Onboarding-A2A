@@ -1,0 +1,24 @@
+{
+  "mode": "parallel",
+  "calls": [
+    {
+      "agent": "knowledge",
+      "skill_id": "search_onboarding_knowledge",
+      "request": {
+        "schema_version": "1.0",
+        "operation": "REVISE_PLAN",
+        "request_id": "req-revise-001",
+        "run_id": "run-revise-001",
+        "correlation_id": "corr-revise-001",
+        "employee_id": "emp-123",
+        "onboarding_id": "onb-123",
+        "idempotency_key": "onb-123:revise:knowledge:v2",
+        "payload": {
+          "query": "Current mandatory product and security training for frontend engineers",
+          "role": "Frontend Developer",
+          "department": "Engineering"
+        }
+      }
+    }
+  ]
+}

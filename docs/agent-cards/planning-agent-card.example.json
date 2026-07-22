@@ -1,0 +1,82 @@
+{
+  "name": "Adaptive Onboarding Planning Agent",
+  "description": "Generates, revises, adapts, and explains onboarding plans using verified context.",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extendedAgentCard": false
+  },
+  "supportedInterfaces": [
+    {
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0",
+      "url": "https://a2a-onboarding.example.com/agents/planning"
+    }
+  ],
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "generate_onboarding_plan",
+      "name": "Generate onboarding plan",
+      "description": "Create a personalized plan from verified Profile and Knowledge artifacts.",
+      "tags": [
+        "planning",
+        "generation"
+      ]
+    },
+    {
+      "id": "revise_onboarding_plan",
+      "name": "Revise onboarding plan",
+      "description": "Revise an existing plan from explicit feedback.",
+      "tags": [
+        "planning",
+        "revision"
+      ]
+    },
+    {
+      "id": "adapt_onboarding_plan",
+      "name": "Adapt active onboarding plan",
+      "description": "Replan active and future work based on progress and changed conditions.",
+      "tags": [
+        "planning",
+        "adaptation"
+      ]
+    },
+    {
+      "id": "explain_onboarding_plan",
+      "name": "Explain onboarding plan",
+      "description": "Explain tasks, milestones, dependencies, owners, and deadlines.",
+      "tags": [
+        "planning",
+        "explanation"
+      ]
+    }
+  ],
+  "documentationUrl": "https://a2a-onboarding.example.com/docs",
+  "securitySchemes": {
+    "onboardingApiKey": {
+      "apiKeySecurityScheme": {
+        "description": "Service-to-service API key for onboarding A2A calls. Use HTTPS.",
+        "location": "header",
+        "name": "X-A2A-API-Key"
+      }
+    }
+  },
+  "securityRequirements": [
+    {
+      "schemes": {
+        "onboardingApiKey": {}
+      }
+    }
+  ],
+  "provider": {
+    "organization": "Augmented Talents Onboarding Project",
+    "url": "https://a2a-onboarding.example.com"
+  }
+}

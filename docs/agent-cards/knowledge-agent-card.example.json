@@ -1,0 +1,75 @@
+{
+  "name": "Company Onboarding Knowledge Agent",
+  "description": "Retrieves grounded onboarding policies, procedures, requirements, training, tools, contacts, and cited evidence.",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extendedAgentCard": false
+  },
+  "supportedInterfaces": [
+    {
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0",
+      "url": "https://a2a-onboarding.example.com/agents/knowledge"
+    }
+  ],
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "search_onboarding_knowledge",
+      "name": "Search onboarding knowledge",
+      "description": "Retrieve relevant verified company evidence.",
+      "tags": [
+        "knowledge",
+        "rag",
+        "policy"
+      ]
+    },
+    {
+      "id": "answer_onboarding_question",
+      "name": "Answer onboarding knowledge question",
+      "description": "Answer with citations from approved sources.",
+      "tags": [
+        "knowledge",
+        "question-answering"
+      ]
+    },
+    {
+      "id": "get_role_onboarding_requirements",
+      "name": "Get role onboarding requirements",
+      "description": "Retrieve role- and context-specific onboarding requirements.",
+      "tags": [
+        "role",
+        "requirements",
+        "training"
+      ]
+    }
+  ],
+  "documentationUrl": "https://a2a-onboarding.example.com/docs",
+  "securitySchemes": {
+    "onboardingApiKey": {
+      "apiKeySecurityScheme": {
+        "description": "Service-to-service API key for onboarding A2A calls. Use HTTPS.",
+        "location": "header",
+        "name": "X-A2A-API-Key"
+      }
+    }
+  },
+  "securityRequirements": [
+    {
+      "schemes": {
+        "onboardingApiKey": {}
+      }
+    }
+  ],
+  "provider": {
+    "organization": "Augmented Talents Onboarding Project",
+    "url": "https://a2a-onboarding.example.com"
+  }
+}

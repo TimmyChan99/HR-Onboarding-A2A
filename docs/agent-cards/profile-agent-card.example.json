@@ -1,0 +1,74 @@
+{
+  "name": "Employee Onboarding Profile Agent",
+  "description": "Retrieves and normalizes authorized employee profile context, assesses profile completeness, and identifies employee-specific onboarding constraints.",
+  "version": "1.0.0",
+  "provider": {
+    "organization": "Augmented Talents Onboarding Project",
+    "url": "https://a2a-onboarding.example.com"
+  },
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extendedAgentCard": false
+  },
+  "supportedInterfaces": [
+    {
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0",
+      "url": "https://a2a-onboarding.example.com/agents/profile"
+    }
+  ],
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "get_employee_onboarding_profile",
+      "name": "Get employee onboarding profile",
+      "description": "Return normalized employee and organization context.",
+      "tags": [
+        "profile",
+        "employee",
+        "onboarding"
+      ]
+    },
+    {
+      "id": "assess_profile_completeness",
+      "name": "Assess profile completeness",
+      "description": "Identify missing or inconsistent profile information.",
+      "tags": [
+        "profile",
+        "validation"
+      ]
+    },
+    {
+      "id": "identify_onboarding_constraints",
+      "name": "Identify onboarding constraints",
+      "description": "Identify employee-specific constraints that affect onboarding.",
+      "tags": [
+        "profile",
+        "constraints"
+      ]
+    }
+  ],
+  "documentationUrl": "https://a2a-onboarding.example.com/docs",
+  "securitySchemes": {
+    "onboardingApiKey": {
+      "apiKeySecurityScheme": {
+        "description": "Service-to-service API key for onboarding A2A calls. Use HTTPS.",
+        "location": "header",
+        "name": "X-A2A-API-Key"
+      }
+    }
+  },
+  "securityRequirements": [
+    {
+      "schemes": {
+        "onboardingApiKey": {}
+      }
+    }
+  ]
+}

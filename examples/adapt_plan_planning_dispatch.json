@@ -1,0 +1,43 @@
+{
+  "mode": "series",
+  "calls": [
+    {
+      "agent": "planning",
+      "skill_id": "adapt_onboarding_plan",
+      "request": {
+        "schema_version": "1.0",
+        "operation": "ADAPT_PLAN",
+        "request_id": "req-adapt-001",
+        "run_id": "run-adapt-001",
+        "correlation_id": "corr-adapt-001",
+        "employee_id": "emp-123",
+        "onboarding_id": "onb-123",
+        "idempotency_key": "onb-123:adapt:planning:v2",
+        "payload": {
+          "current_plan": {
+            "plan_id": "plan-123",
+            "version": 1,
+            "tasks": []
+          },
+          "progress": {
+            "completed_task_ids": ["task-001", "task-002"],
+            "blocked_task_ids": ["task-003"],
+            "progress_percentage": 20
+          },
+          "adaptation_trigger": "Laptop delivery is delayed by five working days and work mode changed to remote",
+          "profile_context": {
+            "status": "SUCCEEDED",
+            "artifact_type": "EMPLOYEE_PROFILE_CONTEXT",
+            "data": {}
+          },
+          "knowledge_context": {
+            "status": "SUCCEEDED",
+            "artifact_type": "ONBOARDING_KNOWLEDGE_EVIDENCE",
+            "data": {}
+          },
+          "preserve_completed_tasks": true
+        }
+      }
+    }
+  ]
+}

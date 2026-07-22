@@ -1,0 +1,45 @@
+{
+  "mode": "parallel",
+  "calls": [
+    {
+      "agent": "profile",
+      "skill_id": "identify_onboarding_constraints",
+      "request": {
+        "schema_version": "1.0",
+        "operation": "ADAPT_PLAN",
+        "request_id": "req-adapt-001",
+        "run_id": "run-adapt-001",
+        "correlation_id": "corr-adapt-001",
+        "employee_id": "emp-123",
+        "onboarding_id": "onb-123",
+        "idempotency_key": "onb-123:adapt:profile:v2",
+        "payload": {
+          "changes": {
+            "work_mode": "REMOTE",
+            "availability": "PARTIAL_FIRST_WEEK"
+          }
+        }
+      }
+    },
+    {
+      "agent": "knowledge",
+      "skill_id": "search_onboarding_knowledge",
+      "request": {
+        "schema_version": "1.0",
+        "operation": "ADAPT_PLAN",
+        "request_id": "req-adapt-001",
+        "run_id": "run-adapt-001",
+        "correlation_id": "corr-adapt-001",
+        "employee_id": "emp-123",
+        "onboarding_id": "onb-123",
+        "idempotency_key": "onb-123:adapt:knowledge:v2",
+        "payload": {
+          "query": "Remote onboarding requirements and approved equipment-delivery procedure",
+          "role": "Frontend Developer",
+          "department": "Engineering",
+          "location": "Morocco"
+        }
+      }
+    }
+  ]
+}

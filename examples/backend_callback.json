@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "event_type": "ONBOARDING_PLAN_GENERATED",
+  "status": "SUCCEEDED",
+  "operation": "GENERATE_PLAN",
+  "request_id": "req-001",
+  "run_id": "run-001",
+  "correlation_id": "corr-001",
+  "employee_id": "emp-123",
+  "onboarding_id": "onb-123",
+  "idempotency_key": "onb-123:generate:callback:v1",
+  "result": {
+    "plan": {},
+    "sources": [],
+    "warnings": []
+  },
+  "agent_executions": [
+    {
+      "agent": "profile",
+      "skill_id": "get_employee_onboarding_profile",
+      "task_id": "task-profile",
+      "state": "TASK_STATE_COMPLETED",
+      "artifact_type": "EMPLOYEE_PROFILE_CONTEXT"
+    }
+  ],
+  "errors": [],
+  "metadata": {}
+}

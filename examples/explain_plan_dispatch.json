@@ -1,0 +1,32 @@
+{
+  "mode": "series",
+  "calls": [
+    {
+      "agent": "planning",
+      "skill_id": "explain_onboarding_plan",
+      "request": {
+        "schema_version": "1.0",
+        "operation": "ANSWER_QUESTION",
+        "request_id": "req-explain-001",
+        "run_id": "run-explain-001",
+        "correlation_id": "corr-explain-001",
+        "employee_id": "emp-123",
+        "onboarding_id": "onb-123",
+        "idempotency_key": "onb-123:explain:planning:001",
+        "payload": {
+          "question": "Why must security training be completed before repository access?",
+          "current_plan": {
+            "plan_id": "plan-123",
+            "version": 1,
+            "tasks": []
+          },
+          "knowledge_context": {
+            "status": "SUCCEEDED",
+            "artifact_type": "ONBOARDING_KNOWLEDGE_EVIDENCE",
+            "data": {}
+          }
+        }
+      }
+    }
+  ]
+}

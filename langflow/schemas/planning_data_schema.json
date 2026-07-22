@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Onboarding Plan Data",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "plan_id": {"type": ["string", "null"]},
+    "version": {"type": "integer", "minimum": 1},
+    "title": {"type": "string"},
+    "status": {"type": "string"},
+    "start_date": {"type": ["string", "null"]},
+    "duration_days": {"type": ["integer", "null"], "minimum": 1},
+    "phases": {"type": "array", "items": {"type": "object"}},
+    "milestones": {"type": "array", "items": {"type": "object"}},
+    "tasks": {"type": "array", "items": {"type": "object"}},
+    "change_summary": {"type": "object"},
+    "adaptation_summary": {"type": "object"},
+    "sources": {"type": "array", "items": {"type": "object"}},
+    "assumptions": {"type": "array", "items": {"type": "string"}}
+  }
+}

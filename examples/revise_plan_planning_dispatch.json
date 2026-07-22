@@ -1,0 +1,36 @@
+{
+  "mode": "series",
+  "calls": [
+    {
+      "agent": "planning",
+      "skill_id": "revise_onboarding_plan",
+      "request": {
+        "schema_version": "1.0",
+        "operation": "REVISE_PLAN",
+        "request_id": "req-revise-001",
+        "run_id": "run-revise-001",
+        "correlation_id": "corr-revise-001",
+        "employee_id": "emp-123",
+        "onboarding_id": "onb-123",
+        "idempotency_key": "onb-123:revise:planning:v2",
+        "payload": {
+          "current_plan": {
+            "plan_id": "plan-123",
+            "version": 1,
+            "tasks": []
+          },
+          "requested_changes": [
+            "Add product architecture training during week two",
+            "Preserve all completed tasks"
+          ],
+          "knowledge_context": {
+            "status": "SUCCEEDED",
+            "artifact_type": "ONBOARDING_KNOWLEDGE_EVIDENCE",
+            "data": {}
+          },
+          "immutable_fields": ["completed_tasks", "plan_id"]
+        }
+      }
+    }
+  ]
+}

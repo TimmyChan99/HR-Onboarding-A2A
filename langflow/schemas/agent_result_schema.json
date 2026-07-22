@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Onboarding Agent Result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "status", "artifact_type", "data", "warnings", "errors", "metadata"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0"},
+    "status": {"type": "string", "enum": ["SUCCEEDED", "PARTIAL_SUCCESS", "FAILED"]},
+    "artifact_type": {"type": "string"},
+    "data": {"type": "object"},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "message", "retryable"],
+        "properties": {
+          "code": {"type": "string"},
+          "message": {"type": "string"},
+          "field": {"type": ["string", "null"]},
+          "retryable": {"type": "boolean"}
+        }
+      }
+    },
+    "metadata": {"type": "object"}
+  }
+}

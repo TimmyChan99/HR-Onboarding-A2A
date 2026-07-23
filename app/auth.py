@@ -9,12 +9,20 @@ from starlette.types import ASGIApp
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
-    """Protect A2A and dispatcher endpoints while leaving discovery cards public."""
+    """Apply separate credentials to MCP and A2A/REST transport routes."""
 
-    def __init__(self, app: ASGIApp, *, header_name: str, expected_key: str) -> None:
+    def __init__(
+        self,
+        app: ASGIApp,
+        *,
+        header_name: str,
+        expected_key: str,
+        mcp_bearer_token: str,
+    ) -> None:
         super().__init__(app)
         self.header_name = header_name
         self.expected_key = expected_key
+        self.expected_mcp_authorization = f"Bearer {mcp_bearer_token}"
 
     @staticmethod
     def _is_public(path: str) -> bool:
@@ -24,6 +32,25 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         )
 
     async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[no-untyped-def]
+        if request.url.path == "/mcp" or request.url.path.startswith("/mcp/"):
+            supplied = request.headers.get("Authorization", "")
+            if not supplied or not hmac.compare_digest(
+                supplied,
+                self.expected_mcp_authorization,
+            ):
+                return JSONResponse(
+                    {
+                        "type": "https://modelcontextprotocol.io/errors/unauthorized",
+                        "title": "Unauthorized",
+                        "status": 401,
+                        "detail": "Missing or invalid Authorization bearer token",
+                        "error": "MCP_AUTHENTICATION_REQUIRED",
+                    },
+                    status_code=401,
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            return await call_next(request)
+
         if self._is_public(request.url.path):
             return await call_next(request)
 

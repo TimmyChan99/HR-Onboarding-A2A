@@ -28,11 +28,17 @@ For each `{agent}` in `profile`, `knowledge`, and `planning`:
 
 The MVP advertises `streaming=false`, `push_notifications=false`, and `extended_agent_card=false`. Clients must respect the Agent Card instead of assuming every exposed route is supported for production use.
 
-## Langflow-facing convenience API
+## Langflow-facing MCP tool
+
+`POST /mcp` (Streamable HTTP MCP)
+
+WF-01 connects to this endpoint with `Authorization: Bearer <MCP_BEARER_TOKEN>` and discovers the typed `dispatch_onboarding_agents` tool. The MCP gateway invokes the shared dispatcher service directly; it does not make a loopback REST call.
+
+## REST convenience API
 
 `POST /orchestrator/dispatch`
 
-This is a project-specific façade designed for the ABA Fusion API Request tool. It accepts one or more high-level calls and internally performs real A2A discovery and messaging.
+This project-specific façade remains available for Postman, cURL, automated tests, diagnostics, and non-MCP clients. It accepts the same dispatcher payload and uses `X-A2A-API-Key` authentication.
 
 `GET /orchestrator/agents`
 

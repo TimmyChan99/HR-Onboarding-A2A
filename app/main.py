@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.routes import create_agent_card_routes, create_rest_routes
@@ -20,6 +21,7 @@ from app.dispatcher import A2ADispatcher
 from app.executor import LangflowAgentExecutor
 from app.langflow_client import LangflowClient
 from app.logging_config import configure_logging
+from app.mcp_gateway import create_onboarding_mcp
 from app.registry import AGENTS
 from app.schemas import DispatchRequest, DispatchResponse
 
@@ -32,6 +34,10 @@ engine: AsyncEngine = create_async_engine(settings.database_url, pool_pre_ping=T
 langflow_client = LangflowClient(settings)
 internal_a2a_client = InternalA2AClient(settings)
 dispatcher = A2ADispatcher(internal_a2a_client)
+onboarding_mcp = create_onboarding_mcp(
+    dispatcher,
+    public_base_url=settings.public_base_url,
+)
 task_stores: dict[str, DatabaseTaskStore] = {}
 
 
@@ -61,16 +67,17 @@ def build_agent_subapp(agent_key: str) -> Starlette:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    for store in task_stores.values():
-        await store.initialize()
-    logger.info("A2A onboarding service started", extra={"agents": list(AGENTS)})
-    try:
-        yield
-    finally:
-        await internal_a2a_client.close()
-        await langflow_client.close()
-        await engine.dispose()
-        logger.info("A2A onboarding service stopped")
+    async with onboarding_mcp.session_manager.run():
+        for store in task_stores.values():
+            await store.initialize()
+        logger.info("A2A onboarding service started", extra={"agents": list(AGENTS)})
+        try:
+            yield
+        finally:
+            await internal_a2a_client.close()
+            await langflow_client.close()
+            await engine.dispose()
+            logger.info("A2A onboarding service stopped")
 
 
 app = FastAPI(
@@ -87,6 +94,7 @@ app.add_middleware(
     APIKeyMiddleware,
     header_name=settings.a2a_api_key_header,
     expected_key=settings.a2a_api_key.get_secret_value(),
+    mcp_bearer_token=settings.mcp_bearer_token.get_secret_value(),
 )
 
 
@@ -96,6 +104,7 @@ async def root() -> dict[str, Any]:
         "service": "a2a-onboarding-langflow",
         "version": "1.0.0",
         "protocol": "A2A 1.0 HTTP+JSON",
+        "orchestrator_transport": "MCP Streamable HTTP",
         "agents": {
             key: {
                 "card": f"/agents/{key}/.well-known/agent-card.json",
@@ -105,7 +114,8 @@ async def root() -> dict[str, Any]:
             }
             for key in AGENTS
         },
-        "langflow_tool_endpoint": "/orchestrator/dispatch",
+        "langflow_tool_endpoint": "/mcp",
+        "rest_dispatch_endpoint": "/orchestrator/dispatch",
     }
 
 
@@ -151,3 +161,5 @@ async def dispatch(request: DispatchRequest) -> DispatchResponse:
 
 for key in AGENTS:
     app.mount(f"/agents/{key}", build_agent_subapp(key))
+
+app.mount("/mcp", onboarding_mcp.streamable_http_app())

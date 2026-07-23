@@ -25,6 +25,9 @@ class Settings(BaseSettings):
 
     a2a_api_key: SecretStr = Field(default=SecretStr("development-only-change-me"))
     a2a_api_key_header: str = "X-A2A-API-Key"
+    mcp_bearer_token: SecretStr = Field(
+        default=SecretStr("development-only-mcp-change-me")
+    )
 
     database_url: str = "sqlite+aiosqlite:///./data/a2a_tasks.db"
 

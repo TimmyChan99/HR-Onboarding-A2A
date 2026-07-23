@@ -19,14 +19,16 @@ The external Python service supplies what Langflow 1.7.x does not natively provi
 - task retrieval and cancellation
 - transport authentication
 - a Langflow Run API adapter
-- a high-level dispatcher endpoint suitable for one Langflow API Request tool
+- a typed MCP gateway for the Langflow Orchestrator
+- a high-level REST dispatcher endpoint for tests and non-MCP clients
 
 ## 1. Architecture
 
 ```mermaid
 flowchart LR
     B[Augmented Talents Backend] -->|Onboarding operation| O[WF-01 Langflow Orchestration Agent]
-    O -->|POST /orchestrator/dispatch| D[A2A Client Dispatcher]
+    O -->|MCP dispatch_onboarding_agents| M[MCP Gateway]
+    M -->|Shared service call| D[A2A Client Dispatcher]
 
     D -->|Agent Card + A2A message| PA[Profile A2A Agent]
     D -->|Agent Card + A2A message| KA[Knowledge A2A Agent]
@@ -137,15 +139,21 @@ For `profile`, replace the prefix with `knowledge` or `planning` for the other a
 
 This project advertises `streaming=false` and does not configure push notifications for the MVP. The route factory can expose standard routes even when a capability is not advertised; callers must respect the Agent Card. The pinned SDK exposes both `GET` and `POST` for task subscription; the A2A specification defines `GET`.
 
-## 4. Convenience dispatcher for Langflow
+## 4. MCP gateway and REST dispatcher
 
-The Orchestration Agent should use one locked-down API Request tool:
+The Orchestration Agent should connect to the Streamable HTTP MCP endpoint:
 
 ```text
-POST /orchestrator/dispatch
+https://YOUR-A2A-SERVICE/mcp
 ```
 
-The dispatcher is a convenience façade, not a replacement for A2A. Internally it:
+It discovers one typed tool:
+
+```text
+dispatch_onboarding_agents(mode, calls)
+```
+
+The MCP gateway validates the typed arguments and calls the existing dispatcher service directly. The dispatcher is a convenience façade, not a replacement for A2A. Internally it:
 
 1. fetches the target Agent Card;
 2. verifies that the requested skill is advertised;
@@ -176,6 +184,8 @@ and ordered calls:
 
 Use `parallel` for independent Profile and Knowledge calls. Call Planning only after required upstream artifacts are available.
 
+`POST /orchestrator/dispatch` remains available with `X-A2A-API-Key` for Postman/cURL tests, diagnostics, and non-MCP clients. WF-01 uses `Authorization: Bearer <MCP_BEARER_TOKEN>` on `/mcp`; the two credentials are intentionally separate.
+
 Examples for all four operations are under [examples](examples/). See also [docs/operation-routing.md](docs/operation-routing.md), [docs/endpoints.md](docs/endpoints.md), and the rendered Agent Card examples under [docs/agent-cards](docs/agent-cards/).
 
 ## 5. Project tree
@@ -191,6 +201,7 @@ a2a-onboarding-langflow/
 │   ├── executor.py            # A2A AgentExecutor -> Langflow flow
 │   ├── langflow_client.py     # ABA Fusion/Langflow Run API adapter
 │   ├── main.py                # FastAPI application and mounted A2A agents
+│   ├── mcp_gateway.py         # Typed MCP tool wrapping the shared dispatcher
 │   ├── message_utils.py       # Protobuf data-part conversion
 │   ├── registry.py            # Agent identities and skills
 │   ├── schemas.py             # Domain request/result contracts
@@ -309,18 +320,17 @@ The server searches the Langflow response for that structured object and rejects
 
 Use [langflow/prompts/orchestrator_agent.txt](langflow/prompts/orchestrator_agent.txt). The component-by-component platform setup is in [langflow/SETUP.md](langflow/SETUP.md).
 
-Add an API Request tool for the dispatcher with static configuration:
+Register the service as a Streamable HTTP MCP server:
 
 ```text
-Method: POST
-URL: https://YOUR-A2A-SERVICE/orchestrator/dispatch
-Header: X-A2A-API-Key = secret stored in the component or platform secret store
-Content-Type: application/json
+Name: Adaptive Onboarding A2A Gateway
+URL: https://YOUR-A2A-SERVICE/mcp
+Header: Authorization = Bearer <MCP_BEARER_TOKEN>
 ```
 
-Do not expose the API key as a prompt variable and do not let the LLM choose the host.
+Add the MCP Tools component, select only `dispatch_onboarding_agents`, enable Tool Mode, and connect it to the Agent. The Agent supplies typed `mode` and `calls` arguments; it does not construct HTTP requests, URLs, headers, cURL, or body strings.
 
-Add a separate API Request tool for the backend callback. The callback URL should be allowlisted or derived from trusted backend configuration. The Orchestrator performs one callback after the full result is ready.
+Do not expose the MCP bearer token as a prompt variable. Add a separate HTTP tool for the backend callback. The callback URL should be allowlisted or derived from trusted backend configuration. The Orchestrator performs one callback after the full result is ready.
 
 ### Operation mapping
 
@@ -345,6 +355,7 @@ Set at minimum:
 PUBLIC_BASE_URL=https://a2a-onboarding.example.com
 INTERNAL_BASE_URL=http://127.0.0.1:8080
 A2A_API_KEY=use-a-long-random-secret
+MCP_BEARER_TOKEN=use-a-different-long-random-secret
 
 LANGFLOW_BASE_URL=https://stg-agentic.abafusion.ai
 LANGFLOW_API_KEY=your-key
@@ -454,6 +465,8 @@ python scripts/smoke_test.py \
   --payload examples/generate_plan_stage1_dispatch.json
 ```
 
+WF-01 connects to `http://localhost:8080/mcp` (or the public HTTPS `/mcp` URL) with `Authorization: Bearer <MCP_BEARER_TOKEN>`. The same mock executor runtime is used behind the real MCP gateway, dispatcher, and A2A task lifecycle.
+
 ## 13. Raw A2A call
 
 A direct A2A HTTP+JSON call can be made to:
@@ -518,6 +531,7 @@ For multiple service replicas, switch to PostgreSQL and use the official Postgre
 Implemented MVP controls:
 
 - HTTPS expected in non-local deployments
+- separate bearer authentication for `/mcp`
 - API key declared in Agent Cards and validated by middleware
 - Agent Cards public; execution and task routes protected
 - flow IDs and Langflow credentials remain server-side
@@ -617,6 +631,7 @@ Project-specific:
 - `OnboardingRequest`
 - the four onboarding operations
 - Profile, Knowledge, and Planning domain schemas
+- `/mcp` and `dispatch_onboarding_agents`
 - `/orchestrator/dispatch`
 - the backend callback contract
 - Langflow flow mapping
@@ -631,7 +646,10 @@ When deploying behind a reverse proxy, preserve the mounted paths:
 /agents/profile
 /agents/knowledge
 /agents/planning
+/mcp
 /orchestrator/dispatch
 ```
+
+The MCP server validates the HTTP `Host` header. Set `PUBLIC_BASE_URL` to the actual public HTTPS origin, including the current ngrok origin during local tunneling, so that host is added to the MCP transport allowlist.
 
 Do not expose ABA Fusion flow IDs or its API key to the Langflow LLM. Only the external A2A service should call executor flow endpoints.

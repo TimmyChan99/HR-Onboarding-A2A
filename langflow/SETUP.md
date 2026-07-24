@@ -119,3 +119,75 @@ For each executor flow:
 5. Ensure the flow output contains one valid `AgentResult` object.
 
 The adapter supports the common direct Langflow run body and a newer wrapped `input_request` body. Set `LANGFLOW_API_STYLE` explicitly after confirming the generated API example.
+
+## Choose executor transport
+
+The A2A service supports one configured transport for all three executor agents.
+
+### Flow Run API
+
+Use this existing mode when Share/API access provides flow IDs or aliases:
+
+```dotenv
+LANGFLOW_EXECUTION_MODE=run_api
+LANGFLOW_PROFILE_FLOW_ID=...
+LANGFLOW_KNOWLEDGE_FLOW_ID=...
+LANGFLOW_PLANNING_FLOW_ID=...
+```
+
+### Webhooks
+
+Use this mode when each executor flow exposes a Webhook component:
+
+```dotenv
+LANGFLOW_EXECUTION_MODE=webhook
+LANGFLOW_PROFILE_WEBHOOK_URL=https://YOUR-LANGFLOW/api/v1/webhook/...
+LANGFLOW_KNOWLEDGE_WEBHOOK_URL=https://YOUR-LANGFLOW/api/v1/webhook/...
+LANGFLOW_PLANNING_WEBHOOK_URL=https://YOUR-LANGFLOW/api/v1/webhook/...
+```
+
+In webhook mode, the service POSTs the raw A2A command below to the matching webhook URL. Langflow returns an acknowledgement that the flow started, so it does not provide the final executor result in that response.
+
+```json
+{
+  "skill_id": "get_employee_onboarding_profile",
+  "request": {
+    "operation": "GENERATE_PLAN",
+    "request_id": "...",
+    "run_id": "...",
+    "correlation_id": "...",
+    "employee_id": "...",
+    "payload": {}
+  }
+}
+```
+
+Add an API Request component after the executor's Structured Output component. Configure it with static values:
+
+```text
+Method: POST
+URL: https://YOUR-A2A-SERVICE/executors/profile/callback
+Header: Authorization = Bearer <EXECUTOR_CALLBACK_BEARER_TOKEN>
+Content-Type: application/json
+```
+
+For Knowledge and Planning, replace `profile` in the callback URL with the agent key. The API Request body must be:
+
+```json
+{
+  "request_id": "the original request_id",
+  "run_id": "the original run_id",
+  "correlation_id": "the original correlation_id",
+  "result": {
+    "schema_version": "1.0",
+    "status": "SUCCEEDED",
+    "artifact_type": "EMPLOYEE_PROFILE_CONTEXT",
+    "data": {},
+    "warnings": [],
+    "errors": [],
+    "metadata": {}
+  }
+}
+```
+
+The callback endpoint returns `202` when it matches an active task. The executor must return the usual `AgentResult` with its required artifact type. A full `GENERATE_PLAN` needs all three agents configured; a Profile-only test needs only `LANGFLOW_PROFILE_WEBHOOK_URL`.

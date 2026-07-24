@@ -63,6 +63,15 @@ class AgentResult(BaseModel):
         return self
 
 
+class ExecutorWebhookCallback(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: str = Field(min_length=1)
+    run_id: str = Field(min_length=1)
+    correlation_id: str = Field(min_length=1)
+    result: AgentResult
+
+
 class DispatchCall(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

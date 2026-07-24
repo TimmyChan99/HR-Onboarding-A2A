@@ -5,12 +5,13 @@ import json
 import logging
 import re
 import time
+from dataclasses import dataclass
 from typing import Any
 
 import httpx
 
 from app.config import Settings
-from app.schemas import AgentResult
+from app.schemas import AgentResult, ExecutorWebhookCallback
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,14 @@ class LangflowInvocationError(RuntimeError):
     def __init__(self, message: str, *, retryable: bool = False) -> None:
         super().__init__(message)
         self.retryable = retryable
+
+
+@dataclass(frozen=True, slots=True)
+class WebhookCallbackKey:
+    agent_key: str
+    request_id: str
+    run_id: str
+    correlation_id: str
 
 
 class LangflowClient:
@@ -42,8 +51,15 @@ class LangflowClient:
             verify=settings.verify_tls,
             headers=headers,
         )
+        self._webhook_callbacks: dict[WebhookCallbackKey, asyncio.Future[AgentResult]] = {}
+        self._callback_lock = asyncio.Lock()
 
     async def close(self) -> None:
+        async with self._callback_lock:
+            for callback in self._webhook_callbacks.values():
+                if not callback.done():
+                    callback.cancel()
+            self._webhook_callbacks.clear()
         await self._client.aclose()
 
     async def run_agent(
@@ -54,21 +70,22 @@ class LangflowClient:
         session_id: str,
         expected_artifact_type: str,
     ) -> AgentResult:
-        flow_id = self.settings.flow_id_for(agent_key)
-        direct_input: dict[str, Any] = {
-            "input_value": json.dumps(command, ensure_ascii=False),
-            "input_type": "chat",
-            "output_type": "chat",
-            "session_id": session_id,
-        }
-        if self.settings.langflow_output_component:
-            direct_input["output_component"] = self.settings.langflow_output_component
+        if self.settings.langflow_execution_mode == "webhook":
+            return await self._run_webhook_agent(
+                agent_key=agent_key,
+                command=command,
+                expected_artifact_type=expected_artifact_type,
+            )
 
         last_error: Exception | None = None
         for attempt in range(1, self.settings.langflow_max_attempts + 1):
             started = time.perf_counter()
             try:
-                response = await self._post_run_flow(flow_id, direct_input)
+                response = await self._execute_agent(
+                    agent_key=agent_key,
+                    command=command,
+                    session_id=session_id,
+                )
                 if response.status_code in _RETRYABLE_STATUS:
                     raise LangflowInvocationError(
                         f"Langflow returned retryable HTTP {response.status_code}",
@@ -110,6 +127,151 @@ class LangflowClient:
             raise last_error
         raise LangflowInvocationError("Langflow execution failed without a detailed error")
 
+
+    async def _execute_agent(
+        self,
+        *,
+        agent_key: str,
+        command: dict[str, Any],
+        session_id: str,
+    ) -> httpx.Response:
+        flow_id = self.settings.flow_id_for(agent_key)
+        direct_input: dict[str, Any] = {
+            "input_value": json.dumps(command, ensure_ascii=False),
+            "input_type": "chat",
+            "output_type": "chat",
+            "session_id": session_id,
+        }
+        if self.settings.langflow_output_component:
+            direct_input["output_component"] = self.settings.langflow_output_component
+        return await self._post_run_flow(flow_id, direct_input)
+
+    async def _post_webhook(
+        self,
+        agent_key: str,
+        command: dict[str, Any],
+    ) -> httpx.Response:
+        """Invoke an executor's Webhook component with the raw A2A command."""
+        return await self._client.post(
+            self.settings.webhook_url_for(agent_key),
+            json=command,
+        )
+
+    async def _run_webhook_agent(
+        self,
+        *,
+        agent_key: str,
+        command: dict[str, Any],
+        expected_artifact_type: str,
+    ) -> AgentResult:
+        key = self._callback_key(agent_key, command)
+        callback = await self._register_webhook_callback(key)
+        started = time.perf_counter()
+
+        try:
+            response = await self._post_webhook(agent_key, command)
+            if response.status_code in _RETRYABLE_STATUS:
+                raise LangflowInvocationError(
+                    f"Langflow webhook returned retryable HTTP {response.status_code}",
+                    retryable=True,
+                )
+            response.raise_for_status()
+
+            direct_result = self._direct_result_or_none(response)
+            result = (
+                direct_result
+                if direct_result is not None
+                else await asyncio.wait_for(
+                    callback,
+                    timeout=self.settings.langflow_timeout_seconds,
+                )
+            )
+            if result.artifact_type != expected_artifact_type:
+                raise LangflowInvocationError(
+                    "Langflow returned artifact_type "
+                    f"'{result.artifact_type}', expected '{expected_artifact_type}'"
+                )
+            logger.info(
+                "Langflow webhook agent completed",
+                extra={
+                    "agent": agent_key,
+                    "duration_ms": int((time.perf_counter() - started) * 1000),
+                },
+            )
+            return result
+        except TimeoutError as exc:
+            raise LangflowInvocationError(
+                "Timed out waiting for the executor webhook callback",
+                retryable=False,
+            ) from exc
+        except httpx.TimeoutException as exc:
+            raise LangflowInvocationError(str(exc), retryable=True) from exc
+        except httpx.HTTPStatusError as exc:
+            raise LangflowInvocationError(str(exc), retryable=False) from exc
+        finally:
+            await self._remove_webhook_callback(key)
+
+    async def complete_webhook_callback(
+        self,
+        agent_key: str,
+        callback: ExecutorWebhookCallback,
+    ) -> bool:
+        key = WebhookCallbackKey(
+            agent_key=agent_key,
+            request_id=callback.request_id,
+            run_id=callback.run_id,
+            correlation_id=callback.correlation_id,
+        )
+        async with self._callback_lock:
+            waiting = self._webhook_callbacks.get(key)
+            if waiting is None:
+                return False
+            if not waiting.done():
+                waiting.set_result(callback.result)
+            return True
+
+    async def _register_webhook_callback(
+        self,
+        key: WebhookCallbackKey,
+    ) -> asyncio.Future[AgentResult]:
+        async with self._callback_lock:
+            if key in self._webhook_callbacks:
+                raise LangflowInvocationError(
+                    "A webhook callback is already pending for this agent request"
+                )
+            callback: asyncio.Future[AgentResult] = asyncio.get_running_loop().create_future()
+            self._webhook_callbacks[key] = callback
+            return callback
+
+    async def _remove_webhook_callback(self, key: WebhookCallbackKey) -> None:
+        async with self._callback_lock:
+            self._webhook_callbacks.pop(key, None)
+
+    @staticmethod
+    def _callback_key(agent_key: str, command: dict[str, Any]) -> WebhookCallbackKey:
+        request = command.get("request")
+        if not isinstance(request, dict):
+            raise LangflowInvocationError("Webhook command is missing a request object")
+        try:
+            return WebhookCallbackKey(
+                agent_key=agent_key,
+                request_id=str(request["request_id"]),
+                run_id=str(request["run_id"]),
+                correlation_id=str(request["correlation_id"]),
+            )
+        except KeyError as exc:
+            raise LangflowInvocationError(
+                f"Webhook command is missing {exc.args[0]}"
+            ) from exc
+
+    @classmethod
+    def _direct_result_or_none(cls, response: httpx.Response) -> AgentResult | None:
+        try:
+            raw = response.json()
+            result_dict = cls._extract_result(raw)
+            return AgentResult.model_validate(result_dict)
+        except (LangflowInvocationError, ValueError, json.JSONDecodeError):
+            return None
 
     async def _post_run_flow(
         self,

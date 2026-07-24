@@ -60,6 +60,7 @@ def build_test_app() -> tuple[FastAPI, Any, RecordingDispatcher]:
         header_name="X-A2A-API-Key",
         expected_key="a2a-secret",
         mcp_bearer_token="mcp-secret",
+        executor_callback_bearer_token="callback-secret",
     )
 
     @app.post("/orchestrator/dispatch")
@@ -172,6 +173,10 @@ async def test_mcp_and_a2a_credentials_are_not_interchangeable() -> None:
             headers={"X-A2A-API-Key": "a2a-secret"},
             json={},
         )
+        missing_callback_token = await client.post(
+            "/executors/profile/callback",
+            json={},
+        )
         mcp_token_on_rest = await client.post(
             "/orchestrator/dispatch",
             headers={"Authorization": "Bearer mcp-secret"},
@@ -186,5 +191,10 @@ async def test_mcp_and_a2a_credentials_are_not_interchangeable() -> None:
     assert missing_mcp.status_code == 401
     assert missing_mcp.json()["error"] == "MCP_AUTHENTICATION_REQUIRED"
     assert a2a_key_on_mcp.status_code == 401
+    assert missing_callback_token.status_code == 401
+    assert (
+        missing_callback_token.json()["error"]
+        == "EXECUTOR_CALLBACK_AUTHENTICATION_REQUIRED"
+    )
     assert mcp_token_on_rest.status_code == 401
     assert a2a_key_on_rest.status_code == 200

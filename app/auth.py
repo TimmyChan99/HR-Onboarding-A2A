@@ -18,11 +18,15 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         header_name: str,
         expected_key: str,
         mcp_bearer_token: str,
+        executor_callback_bearer_token: str,
     ) -> None:
         super().__init__(app)
         self.header_name = header_name
         self.expected_key = expected_key
         self.expected_mcp_authorization = f"Bearer {mcp_bearer_token}"
+        self.expected_callback_authorization = (
+            f"Bearer {executor_callback_bearer_token}"
+        )
 
     @staticmethod
     def _is_public(path: str) -> bool:
@@ -45,6 +49,27 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
                         "status": 401,
                         "detail": "Missing or invalid Authorization bearer token",
                         "error": "MCP_AUTHENTICATION_REQUIRED",
+                    },
+                    status_code=401,
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            return await call_next(request)
+
+        if request.url.path.startswith("/executors/") and request.url.path.endswith(
+            "/callback"
+        ):
+            supplied = request.headers.get("Authorization", "")
+            if not supplied or not hmac.compare_digest(
+                supplied,
+                self.expected_callback_authorization,
+            ):
+                return JSONResponse(
+                    {
+                        "type": "https://a2a-onboarding/errors/executor-callback-unauthorized",
+                        "title": "Unauthorized",
+                        "status": 401,
+                        "detail": "Missing or invalid executor callback bearer token",
+                        "error": "EXECUTOR_CALLBACK_AUTHENTICATION_REQUIRED",
                     },
                     status_code=401,
                     headers={"WWW-Authenticate": "Bearer"},

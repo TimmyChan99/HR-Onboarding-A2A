@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     mcp_bearer_token: SecretStr = Field(
         default=SecretStr("development-only-mcp-change-me")
     )
+    executor_callback_bearer_token: SecretStr = Field(
+        default=SecretStr("development-only-executor-callback-change-me")
+    )
 
     database_url: str = "sqlite+aiosqlite:///./data/a2a_tasks.db"
 
@@ -35,9 +38,13 @@ class Settings(BaseSettings):
     langflow_api_key: SecretStr = Field(default=SecretStr(""))
     langflow_api_key_header: str = "x-api-key"
     langflow_api_key_prefix: str = ""
+    langflow_execution_mode: Literal["run_api", "webhook"] = "run_api"
     langflow_profile_flow_id: str = ""
     langflow_knowledge_flow_id: str = ""
     langflow_planning_flow_id: str = ""
+    langflow_profile_webhook_url: str = ""
+    langflow_knowledge_webhook_url: str = ""
+    langflow_planning_webhook_url: str = ""
     langflow_timeout_seconds: float = 180.0
     langflow_max_attempts: int = 3
     langflow_output_component: str = ""
@@ -45,7 +52,14 @@ class Settings(BaseSettings):
     a2a_client_timeout_seconds: float = 240.0
     verify_tls: bool = True
 
-    @field_validator("public_base_url", "internal_base_url", "langflow_base_url")
+    @field_validator(
+        "public_base_url",
+        "internal_base_url",
+        "langflow_base_url",
+        "langflow_profile_webhook_url",
+        "langflow_knowledge_webhook_url",
+        "langflow_planning_webhook_url",
+    )
     @classmethod
     def strip_trailing_slash(cls, value: str) -> str:
         return value.rstrip("/")
@@ -70,6 +84,41 @@ class Settings(BaseSettings):
         if not flow_id:
             raise RuntimeError(f"Langflow flow ID is not configured for agent '{agent_key}'")
         return flow_id
+
+    def webhook_url_for(self, agent_key: str) -> str:
+        mapping = {
+            "profile": self.langflow_profile_webhook_url,
+            "knowledge": self.langflow_knowledge_webhook_url,
+            "planning": self.langflow_planning_webhook_url,
+        }
+        try:
+            webhook_url = mapping[agent_key]
+        except KeyError as exc:
+            raise ValueError(f"Unknown agent key: {agent_key}") from exc
+        if not webhook_url:
+            raise RuntimeError(
+                f"Langflow webhook URL is not configured for agent '{agent_key}'"
+            )
+        return webhook_url
+
+    def missing_executor_agents(self) -> list[str]:
+        configured = (
+            self.webhook_url_for
+            if self.langflow_execution_mode == "webhook"
+            else self.flow_id_for
+        )
+        missing: list[str] = []
+        for agent_key in ("profile", "knowledge", "planning"):
+            try:
+                configured(agent_key)
+            except RuntimeError:
+                missing.append(agent_key)
+        return missing
+
+    def executor_callback_url_for(self, agent_key: str) -> str:
+        if agent_key not in {"profile", "knowledge", "planning"}:
+            raise ValueError(f"Unknown agent key: {agent_key}")
+        return f"{self.public_base_url}/executors/{agent_key}/callback"
 
 
 @lru_cache(maxsize=1)

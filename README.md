@@ -359,10 +359,32 @@ MCP_BEARER_TOKEN=use-a-different-long-random-secret
 
 LANGFLOW_BASE_URL=https://stg-agentic.abafusion.ai
 LANGFLOW_API_KEY=your-key
+LANGFLOW_EXECUTION_MODE=run_api
 LANGFLOW_PROFILE_FLOW_ID=your-profile-flow-id
 LANGFLOW_KNOWLEDGE_FLOW_ID=your-knowledge-flow-id
 LANGFLOW_PLANNING_FLOW_ID=your-planning-flow-id
 ```
+
+Choose exactly one executor transport for all agents:
+
+```dotenv
+# Existing flow-ID integration. The service calls /api/v1/run/{flow_id}.
+LANGFLOW_EXECUTION_MODE=run_api
+LANGFLOW_PROFILE_FLOW_ID=your-profile-flow-id
+LANGFLOW_KNOWLEDGE_FLOW_ID=your-knowledge-flow-id
+LANGFLOW_PLANNING_FLOW_ID=your-planning-flow-id
+```
+
+```dotenv
+# Webhook integration. Each webhook receives the raw {skill_id, request} command.
+LANGFLOW_EXECUTION_MODE=webhook
+LANGFLOW_PROFILE_WEBHOOK_URL=https://YOUR-LANGFLOW/api/v1/webhook/profile-id
+LANGFLOW_KNOWLEDGE_WEBHOOK_URL=https://YOUR-LANGFLOW/api/v1/webhook/knowledge-id
+LANGFLOW_PLANNING_WEBHOOK_URL=https://YOUR-LANGFLOW/api/v1/webhook/planning-id
+EXECUTOR_CALLBACK_BEARER_TOKEN=use-a-third-long-random-secret
+```
+
+Langflow Webhook triggers acknowledge background execution rather than returning the final flow output. Add an API Request component at the end of each executor flow that posts the completed `AgentResult` to `https://YOUR-A2A-SERVICE/executors/{agent}/callback`, using `Authorization: Bearer <EXECUTOR_CALLBACK_BEARER_TOKEN>`. The callback body must include `request_id`, `run_id`, `correlation_id`, and `result`. The `/readyz` response identifies which agents are missing configuration for the selected mode.
 
 ABA Fusion deployments can differ. Copy the authentication header and request shape from each flow's Share/API panel.
 

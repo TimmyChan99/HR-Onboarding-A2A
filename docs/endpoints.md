@@ -44,6 +44,23 @@ This project-specific façade remains available for Postman, cURL, automated tes
 
 Returns the fixed logical-agent registry and skill identifiers for diagnostics. It is protected by the service API key.
 
+## Executor webhook callbacks
+
+`POST /executors/{agent}/callback`
+
+Langflow Webhook runs are asynchronous. Each executor flow uses its final API Request component to post the completed `AgentResult` to this endpoint. It requires `Authorization: Bearer <EXECUTOR_CALLBACK_BEARER_TOKEN>` and accepts:
+
+```json
+{
+  "request_id": "...",
+  "run_id": "...",
+  "correlation_id": "...",
+  "result": {}
+}
+```
+
+The path agent and callback identifiers must match an active task. A successful match returns `202` and completes the waiting A2A task.
+
 ## Operations and skills
 
 | Backend operation | Primary skills |

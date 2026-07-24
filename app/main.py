@@ -9,7 +9,7 @@ from typing import Any
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.routes import create_agent_card_routes, create_rest_routes
 from a2a.server.tasks import DatabaseTaskStore
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from starlette.applications import Starlette
 
@@ -23,7 +23,7 @@ from app.langflow_client import LangflowClient
 from app.logging_config import configure_logging
 from app.mcp_gateway import create_onboarding_mcp
 from app.registry import AGENTS
-from app.schemas import DispatchRequest, DispatchResponse
+from app.schemas import DispatchRequest, DispatchResponse, ExecutorWebhookCallback
 
 settings: Settings = get_settings()
 configure_logging(settings.log_level)
@@ -95,6 +95,9 @@ app.add_middleware(
     header_name=settings.a2a_api_key_header,
     expected_key=settings.a2a_api_key.get_secret_value(),
     mcp_bearer_token=settings.mcp_bearer_token.get_secret_value(),
+    executor_callback_bearer_token=(
+        settings.executor_callback_bearer_token.get_secret_value()
+    ),
 )
 
 
@@ -126,14 +129,11 @@ async def health() -> dict[str, str]:
 
 @app.get("/readyz")
 async def ready() -> dict[str, Any]:
-    missing = [
-        key
-        for key in AGENTS
-        if not getattr(settings, f"langflow_{key}_flow_id", "")
-    ]
+    missing = settings.missing_executor_agents()
     return {
         "status": "ready" if not missing else "configuration-required",
-        "missing_flow_ids": missing,
+        "execution_mode": settings.langflow_execution_mode,
+        "missing_executor_agents": missing,
     }
 
 
@@ -157,6 +157,22 @@ async def dispatch(request: DispatchRequest) -> DispatchResponse:
     except Exception as exc:  # noqa: BLE001
         logger.exception("Dispatcher failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/executors/{agent_key}/callback", status_code=status.HTTP_202_ACCEPTED)
+async def executor_callback(
+    agent_key: str,
+    callback: ExecutorWebhookCallback,
+) -> dict[str, bool]:
+    if agent_key not in AGENTS:
+        raise HTTPException(status_code=404, detail="Unknown executor agent")
+    accepted = await langflow_client.complete_webhook_callback(agent_key, callback)
+    if not accepted:
+        raise HTTPException(
+            status_code=404,
+            detail="No active executor webhook callback matches this request",
+        )
+    return {"accepted": True}
 
 
 for key in AGENTS:

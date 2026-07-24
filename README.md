@@ -352,6 +352,11 @@ cp .env.example .env
 Set at minimum:
 
 ```dotenv
+LOG_LEVEL=INFO
+LOG_DIR=logs
+LOG_REQUEST_BODY_MAX_BYTES=4000
+LOG_RESPONSE_BODY_MAX_BYTES=4000
+
 PUBLIC_BASE_URL=https://a2a-onboarding.example.com
 INTERNAL_BASE_URL=http://127.0.0.1:8080
 A2A_API_KEY=use-a-long-random-secret
@@ -598,10 +603,20 @@ onb-123:generate:callback:v1
 
 ## 17. Observability
 
-The server emits structured JSON logs for:
+The server prints readable request summaries in the terminal while `uvicorn` is running and writes JSON-lines files by local date:
+
+```text
+logs/app-YYYY-MM-DD.jsonl
+logs/audit-YYYY-MM-DD.jsonl
+```
+
+The audit log captures HTTP method, path, status, duration, client IP, request IDs, and capped JSON body previews. Credential headers and secret-like JSON fields are redacted. Set `LOG_REQUEST_BODY_MAX_BYTES=0` or `LOG_RESPONSE_BODY_MAX_BYTES=0` to disable body previews.
+
+The server emits structured logs for:
 
 - remote agent and skill
 - request/task correlation
+- HTTP request audit events
 - Langflow execution attempts
 - latency
 - task completion and failure

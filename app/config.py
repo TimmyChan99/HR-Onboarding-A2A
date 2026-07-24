@@ -17,6 +17,9 @@ class Settings(BaseSettings):
 
     app_env: Literal["development", "test", "staging", "production"] = "development"
     log_level: str = "INFO"
+    log_dir: str = "logs"
+    log_request_body_max_bytes: int = 4000
+    log_response_body_max_bytes: int = 4000
     host: str = "0.0.0.0"
     port: int = 8080
 
@@ -69,6 +72,13 @@ class Settings(BaseSettings):
     def validate_attempts(cls, value: int) -> int:
         if value < 1 or value > 5:
             raise ValueError("LANGFLOW_MAX_ATTEMPTS must be between 1 and 5")
+        return value
+
+    @field_validator("log_request_body_max_bytes", "log_response_body_max_bytes")
+    @classmethod
+    def validate_log_body_limit(cls, value: int) -> int:
+        if value < 0 or value > 100_000:
+            raise ValueError("Log body preview limits must be between 0 and 100000")
         return value
 
     def flow_id_for(self, agent_key: str) -> str:

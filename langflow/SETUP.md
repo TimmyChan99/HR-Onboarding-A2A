@@ -183,7 +183,13 @@ For Knowledge and Planning, replace `profile` in the callback URL with the agent
     "status": "SUCCEEDED",
     "artifact_type": "EMPLOYEE_PROFILE_CONTEXT",
     "data": {},
-    "warnings": [],
+    "warnings": [
+      {
+        "code": "PROFILE_DATA_PARTIAL",
+        "message": "Some profile data is missing.",
+        "field": null
+      }
+    ],
     "errors": [],
     "metadata": {}
   }

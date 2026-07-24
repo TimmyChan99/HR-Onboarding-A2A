@@ -19,6 +19,14 @@ class ErrorItem(BaseModel):
     retryable: bool = False
 
 
+class WarningItem(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    code: str
+    message: str
+    field: str | None = None
+
+
 class OnboardingRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
 
@@ -52,7 +60,7 @@ class AgentResult(BaseModel):
     status: ResultStatus
     artifact_type: str = Field(min_length=1)
     data: dict[str, Any] = Field(default_factory=dict)
-    warnings: list[str] = Field(default_factory=list)
+    warnings: list[str | WarningItem] = Field(default_factory=list)
     errors: list[ErrorItem] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
 

@@ -23,10 +23,11 @@ from app.langflow_client import LangflowClient
 from app.logging_config import configure_logging
 from app.mcp_gateway import create_onboarding_mcp
 from app.registry import AGENTS
+from app.request_logging import RequestAuditMiddleware
 from app.schemas import DispatchRequest, DispatchResponse, ExecutorWebhookCallback
 
 settings: Settings = get_settings()
-configure_logging(settings.log_level)
+configure_logging(settings.log_level, settings.log_dir)
 logger = logging.getLogger(__name__)
 
 Path("data").mkdir(parents=True, exist_ok=True)
@@ -98,6 +99,11 @@ app.add_middleware(
     executor_callback_bearer_token=(
         settings.executor_callback_bearer_token.get_secret_value()
     ),
+)
+app.add_middleware(
+    RequestAuditMiddleware,
+    request_body_max_bytes=settings.log_request_body_max_bytes,
+    response_body_max_bytes=settings.log_response_body_max_bytes,
 )
 
 

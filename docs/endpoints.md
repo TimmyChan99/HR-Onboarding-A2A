@@ -55,7 +55,21 @@ Langflow Webhook runs are asynchronous. Each executor flow uses its final API Re
   "request_id": "...",
   "run_id": "...",
   "correlation_id": "...",
-  "result": {}
+  "result": {
+    "schema_version": "1.0",
+    "status": "SUCCEEDED",
+    "artifact_type": "EMPLOYEE_PROFILE_CONTEXT",
+    "data": {},
+    "warnings": [
+      {
+        "code": "PROFILE_DATA_PARTIAL",
+        "message": "Some profile data is missing.",
+        "field": null
+      }
+    ],
+    "errors": [],
+    "metadata": {}
+  }
 }
 ```
 

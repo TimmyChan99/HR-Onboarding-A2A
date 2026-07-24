@@ -38,6 +38,18 @@ def profile_result() -> dict[str, object]:
     }
 
 
+def profile_result_with_structured_warning() -> dict[str, object]:
+    result = profile_result()
+    result["warnings"] = [
+        {
+            "code": "PROFILE_DATA_PARTIAL",
+            "message": "Some profile data is missing.",
+            "field": None,
+        }
+    ]
+    return result
+
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_webhook_mode_posts_raw_command_to_agent_webhook() -> None:
@@ -114,6 +126,51 @@ async def test_webhook_mode_waits_for_the_executor_callback() -> None:
 
     assert accepted is True
     assert result.data["employee"]["employee_id"] == "employee-123"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_webhook_callback_accepts_structured_warnings() -> None:
+    webhook_url = "https://stg-agentic.example/api/v1/webhook/profile-webhook"
+    triggered = asyncio.Event()
+
+    async def webhook_trigger(_: httpx.Request) -> httpx.Response:
+        triggered.set()
+        return httpx.Response(202, json={"status": "in progress"})
+
+    respx.post(webhook_url).mock(side_effect=webhook_trigger)
+    settings = Settings(
+        _env_file=None,
+        langflow_execution_mode="webhook",
+        langflow_profile_webhook_url=webhook_url,
+    )
+    client = LangflowClient(settings)
+
+    try:
+        waiting_result = asyncio.create_task(
+            client.run_agent(
+                agent_key="profile",
+                command=command(),
+                session_id="case-123:req-123",
+                expected_artifact_type="EMPLOYEE_PROFILE_CONTEXT",
+            )
+        )
+        await asyncio.wait_for(triggered.wait(), timeout=1)
+        accepted = await client.complete_webhook_callback(
+            "profile",
+            ExecutorWebhookCallback(
+                request_id="req-123",
+                run_id="run-123",
+                correlation_id="case-123:req-123",
+                result=profile_result_with_structured_warning(),
+            ),
+        )
+        result = await waiting_result
+    finally:
+        await client.close()
+
+    assert accepted is True
+    assert result.warnings[0].code == "PROFILE_DATA_PARTIAL"
 
 
 @pytest.mark.asyncio

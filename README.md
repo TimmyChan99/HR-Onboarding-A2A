@@ -365,6 +365,7 @@ MCP_BEARER_TOKEN=use-a-different-long-random-secret
 LANGFLOW_BASE_URL=https://stg-agentic.abafusion.ai
 LANGFLOW_API_KEY=your-key
 LANGFLOW_EXECUTION_MODE=run_api
+KNOWLEDGE_AGENT_MODE=langflow
 LANGFLOW_PROFILE_FLOW_ID=your-profile-flow-id
 LANGFLOW_KNOWLEDGE_FLOW_ID=your-knowledge-flow-id
 LANGFLOW_PLANNING_FLOW_ID=your-planning-flow-id
@@ -392,6 +393,20 @@ EXECUTOR_CALLBACK_BEARER_TOKEN=use-a-third-long-random-secret
 Langflow Webhook triggers acknowledge background execution rather than returning the final flow output. Add an API Request component at the end of each executor flow that posts the completed `AgentResult` to `https://YOUR-A2A-SERVICE/executors/{agent}/callback`, using `Authorization: Bearer <EXECUTOR_CALLBACK_BEARER_TOKEN>`. The callback body must include `request_id`, `run_id`, `correlation_id`, and `result`. The `/readyz` response identifies which agents are missing configuration for the selected mode.
 
 ABA Fusion deployments can differ. Copy the authentication header and request shape from each flow's Share/API panel.
+
+The Knowledge executor can also run inside this server instead of Langflow:
+
+```dotenv
+KNOWLEDGE_AGENT_MODE=internal
+GOOGLE_API_KEY=
+INTERNAL_KNOWLEDGE_MODEL=gemini-2.5-flash
+INTERNAL_KNOWLEDGE_DOCS_PATH=knowledge
+INTERNAL_KNOWLEDGE_CHROMA_PATH=data/knowledge_chroma
+INTERNAL_KNOWLEDGE_CHROMA_COLLECTION=onboarding_knowledge
+INTERNAL_KNOWLEDGE_TOP_K=5
+```
+
+`KNOWLEDGE_AGENT_MODE=langflow` calls `LANGFLOW_KNOWLEDGE_WEBHOOK_URL` and waits for the normal executor callback. `KNOWLEDGE_AGENT_MODE=internal` bypasses Langflow for Knowledge only. Internal mode reads `.md`, `.txt`, `.json`, and `.pdf` files from `INTERNAL_KNOWLEDGE_DOCS_PATH`, uses a small LangGraph workflow when `langgraph` is installed, local hybrid retrieval with Chroma and BM25, and Gemini generation when `GOOGLE_API_KEY` is set. If Gemini or the optional retrieval libraries are unavailable, it falls back to local extractive answers so development can continue.
 
 Supported authentication configuration:
 

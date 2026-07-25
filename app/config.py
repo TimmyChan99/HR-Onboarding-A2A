@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     langflow_api_key_header: str = "x-api-key"
     langflow_api_key_prefix: str = ""
     langflow_execution_mode: Literal["run_api", "webhook"] = "run_api"
+    knowledge_agent_mode: Literal["langflow", "internal"] = "langflow"
     langflow_profile_flow_id: str = ""
     langflow_knowledge_flow_id: str = ""
     langflow_planning_flow_id: str = ""
@@ -54,6 +55,13 @@ class Settings(BaseSettings):
     langflow_api_style: Literal["legacy", "wrapped", "auto"] = "auto"
     a2a_client_timeout_seconds: float = 240.0
     verify_tls: bool = True
+
+    google_api_key: SecretStr = Field(default=SecretStr(""))
+    internal_knowledge_model: str = "gemini-2.5-flash"
+    internal_knowledge_docs_path: str = "knowledge"
+    internal_knowledge_chroma_path: str = "data/knowledge_chroma"
+    internal_knowledge_chroma_collection: str = "onboarding_knowledge"
+    internal_knowledge_top_k: int = 5
 
     @field_validator(
         "public_base_url",
@@ -79,6 +87,13 @@ class Settings(BaseSettings):
     def validate_log_body_limit(cls, value: int) -> int:
         if value < 0 or value > 100_000:
             raise ValueError("Log body preview limits must be between 0 and 100000")
+        return value
+
+    @field_validator("internal_knowledge_top_k")
+    @classmethod
+    def validate_internal_knowledge_top_k(cls, value: int) -> int:
+        if value < 1 or value > 20:
+            raise ValueError("INTERNAL_KNOWLEDGE_TOP_K must be between 1 and 20")
         return value
 
     def flow_id_for(self, agent_key: str) -> str:
@@ -119,6 +134,14 @@ class Settings(BaseSettings):
         )
         missing: list[str] = []
         for agent_key in ("profile", "knowledge", "planning"):
+            if agent_key == "knowledge" and self.knowledge_agent_mode == "internal":
+                continue
+            if agent_key == "knowledge" and self.knowledge_agent_mode == "langflow":
+                try:
+                    self.webhook_url_for(agent_key)
+                except RuntimeError:
+                    missing.append(agent_key)
+                continue
             try:
                 configured(agent_key)
             except RuntimeError:

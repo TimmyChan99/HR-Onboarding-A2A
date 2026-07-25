@@ -19,6 +19,7 @@ from app.cards import build_agent_card
 from app.config import Settings, get_settings
 from app.dispatcher import A2ADispatcher
 from app.executor import LangflowAgentExecutor
+from app.internal_knowledge_agent import InternalKnowledgeAgent
 from app.langflow_client import LangflowClient
 from app.logging_config import configure_logging
 from app.mcp_gateway import create_onboarding_mcp
@@ -33,6 +34,11 @@ logger = logging.getLogger(__name__)
 Path("data").mkdir(parents=True, exist_ok=True)
 engine: AsyncEngine = create_async_engine(settings.database_url, pool_pre_ping=True)
 langflow_client = LangflowClient(settings)
+internal_knowledge_agent = (
+    InternalKnowledgeAgent(settings)
+    if settings.knowledge_agent_mode == "internal"
+    else None
+)
 internal_a2a_client = InternalA2AClient(settings)
 dispatcher = A2ADispatcher(internal_a2a_client)
 onboarding_mcp = create_onboarding_mcp(
@@ -56,6 +62,7 @@ def build_agent_subapp(agent_key: str) -> Starlette:
         agent_executor=LangflowAgentExecutor(
             spec=spec,
             langflow_client=langflow_client,
+            internal_knowledge_agent=internal_knowledge_agent,
         ),
         task_store=store,
     )
@@ -139,6 +146,7 @@ async def ready() -> dict[str, Any]:
     return {
         "status": "ready" if not missing else "configuration-required",
         "execution_mode": settings.langflow_execution_mode,
+        "knowledge_agent_mode": settings.knowledge_agent_mode,
         "missing_executor_agents": missing,
     }
 

@@ -26,12 +26,38 @@ def command() -> dict[str, object]:
     }
 
 
+def knowledge_command() -> dict[str, object]:
+    return {
+        "skill_id": "answer_onboarding_question",
+        "request": {
+            "operation": "ANSWER_QUESTION",
+            "request_id": "req-knowledge",
+            "run_id": "run-knowledge",
+            "correlation_id": "case-knowledge:req-knowledge",
+            "employee_id": "employee-123",
+            "payload": {"question": "Can employees work remotely?"},
+        },
+    }
+
+
 def profile_result() -> dict[str, object]:
     return {
         "schema_version": "1.0",
         "status": "SUCCEEDED",
         "artifact_type": "EMPLOYEE_PROFILE_CONTEXT",
         "data": {"employee": {"employee_id": "employee-123"}},
+        "warnings": [],
+        "errors": [],
+        "metadata": {},
+    }
+
+
+def knowledge_result() -> dict[str, object]:
+    return {
+        "schema_version": "1.0",
+        "status": "SUCCEEDED",
+        "artifact_type": "ONBOARDING_KNOWLEDGE_EVIDENCE",
+        "data": {"direct_answer": "Remote work is supported by policy evidence."},
         "warnings": [],
         "errors": [],
         "metadata": {},
@@ -119,6 +145,36 @@ async def test_webhook_mode_posts_raw_command_to_agent_webhook() -> None:
     assert route.called
     assert json.loads(route.calls[0].request.content) == command()
     assert str(route.calls[0].request.url.params) == ""
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_knowledge_langflow_mode_uses_webhook_even_when_global_mode_is_run_api() -> None:
+    webhook_url = "https://stg-agentic.example/api/v1/webhook/knowledge-webhook"
+    route = respx.post(webhook_url).mock(
+        return_value=httpx.Response(200, json=knowledge_result())
+    )
+    settings = Settings(
+        _env_file=None,
+        langflow_execution_mode="run_api",
+        knowledge_agent_mode="langflow",
+        langflow_knowledge_flow_id="knowledge-flow",
+        langflow_knowledge_webhook_url=webhook_url,
+    )
+    client = LangflowClient(settings)
+
+    try:
+        result = await client.run_agent(
+            agent_key="knowledge",
+            command=knowledge_command(),
+            session_id="case-knowledge:req-knowledge",
+            expected_artifact_type="ONBOARDING_KNOWLEDGE_EVIDENCE",
+        )
+    finally:
+        await client.close()
+
+    assert route.called
+    assert result.data["direct_answer"] == "Remote work is supported by policy evidence."
 
 
 @pytest.mark.asyncio
@@ -256,7 +312,7 @@ def test_executor_readiness_uses_the_selected_mode() -> None:
         _env_file=None,
         langflow_execution_mode="run_api",
         langflow_profile_flow_id="profile-flow",
-        langflow_knowledge_flow_id="knowledge-flow",
+        langflow_knowledge_webhook_url="https://stg-agentic.example/knowledge",
         langflow_planning_flow_id="planning-flow",
     )
 

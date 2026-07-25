@@ -70,7 +70,13 @@ class LangflowClient:
         session_id: str,
         expected_artifact_type: str,
     ) -> AgentResult:
-        if self.settings.langflow_execution_mode == "webhook":
+        if (
+            self.settings.langflow_execution_mode == "webhook"
+            or (
+                agent_key == "knowledge"
+                and self.settings.knowledge_agent_mode == "langflow"
+            )
+        ):
             return await self._run_webhook_agent(
                 agent_key=agent_key,
                 command=command,

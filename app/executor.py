@@ -12,10 +12,11 @@ from a2a.server.tasks import TaskUpdater
 from a2a.types import Task, TaskState, TaskStatus
 from pydantic import ValidationError
 
+from app.internal_knowledge_agent import InternalKnowledgeAgent
 from app.langflow_client import LangflowClient, LangflowInvocationError
 from app.message_utils import MessagePayloadError, command_from_message, data_part
 from app.registry import AgentSpec
-from app.schemas import A2ACommand
+from app.schemas import A2ACommand, AgentResult
 from app.validation import InputRequiredError, validate_command
 
 logger = logging.getLogger(__name__)
@@ -34,9 +35,11 @@ class LangflowAgentExecutor(AgentExecutor):
         *,
         spec: AgentSpec,
         langflow_client: LangflowClient,
+        internal_knowledge_agent: InternalKnowledgeAgent | None = None,
     ) -> None:
         self.spec = spec
         self.langflow_client = langflow_client
+        self.internal_knowledge_agent = internal_knowledge_agent
         self._active: dict[str, asyncio.Task[Any]] = {}
         self._lock = asyncio.Lock()
 
@@ -86,14 +89,7 @@ class LangflowAgentExecutor(AgentExecutor):
             command = A2ACommand.model_validate(raw_command)
             validate_command(self.spec, command)
 
-            worker = asyncio.create_task(
-                self.langflow_client.run_agent(
-                    agent_key=self.spec.key,
-                    command=command.model_dump(mode="json"),
-                    session_id=command.request.correlation_id,
-                    expected_artifact_type=self.spec.artifact_type,
-                )
-            )
+            worker = asyncio.create_task(self._run_command(command))
             async with self._lock:
                 self._active[task_id] = worker
 
@@ -208,4 +204,15 @@ class LangflowAgentExecutor(AgentExecutor):
             message=updater.new_agent_message(
                 parts=[new_text_part("Cancellation was requested.")]
             )
+        )
+
+    async def _run_command(self, command: A2ACommand) -> AgentResult:
+        if self.spec.key == "knowledge" and self.internal_knowledge_agent is not None:
+            return await self.internal_knowledge_agent.run(command)
+
+        return await self.langflow_client.run_agent(
+            agent_key=self.spec.key,
+            command=command.model_dump(mode="json"),
+            session_id=command.request.correlation_id,
+            expected_artifact_type=self.spec.artifact_type,
         )

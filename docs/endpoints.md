@@ -75,6 +75,14 @@ Langflow Webhook runs are asynchronous. Each executor flow uses its final API Re
 
 The path agent and callback identifiers must match an active task. A successful match returns `202` and completes the waiting A2A task.
 
+The callback can also be wrapped when Langflow emits the object through a text-like component:
+
+```json
+{"text": {"request_id": "...", "run_id": "...", "correlation_id": "...", "result": {}}}
+```
+
+The same envelope is accepted under `result`, `output`, or `data`. If `text` is a JSON string instead of an object, the server parses it before validation.
+
 ## Operations and skills
 
 | Backend operation | Primary skills |

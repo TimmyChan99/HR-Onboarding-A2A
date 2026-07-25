@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import re
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -8,6 +10,7 @@ Operation = Literal["GENERATE_PLAN", "REVISE_PLAN", "ANSWER_QUESTION", "ADAPT_PL
 AgentKey = Literal["profile", "knowledge", "planning"]
 DispatchMode = Literal["parallel", "series"]
 ResultStatus = Literal["SUCCEEDED", "PARTIAL_SUCCESS", "FAILED"]
+_JSON_FENCE = re.compile(r"^```(?:json)?\s*(.*?)\s*```$", re.IGNORECASE | re.DOTALL)
 
 
 class ErrorItem(BaseModel):
@@ -79,6 +82,24 @@ class ExecutorWebhookCallback(BaseModel):
     correlation_id: str = Field(min_length=1)
     result: AgentResult
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_langflow_callback(cls, value: Any) -> Any:
+        """Accept common Langflow wrappers around the callback payload."""
+        payload = _parse_wrapped_json(value)
+        if not isinstance(payload, dict):
+            return value
+
+        if _looks_like_callback(payload):
+            return payload
+
+        for wrapper_key in ("text", "result", "output", "data"):
+            nested = _parse_wrapped_json(payload.get(wrapper_key))
+            if _looks_like_callback(nested):
+                return nested
+
+        return payload
+
 
 class DispatchCall(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -110,3 +131,25 @@ class DispatchResult(BaseModel):
 class DispatchResponse(BaseModel):
     mode: DispatchMode
     results: list[DispatchResult]
+
+
+def _parse_wrapped_json(value: Any) -> Any:
+    if isinstance(value, str):
+        candidate = value.strip()
+        fenced = _JSON_FENCE.match(candidate)
+        if fenced:
+            candidate = fenced.group(1).strip()
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            return value
+    return value
+
+
+def _looks_like_callback(value: Any) -> bool:
+    return isinstance(value, dict) and {
+        "request_id",
+        "run_id",
+        "correlation_id",
+        "result",
+    }.issubset(value)

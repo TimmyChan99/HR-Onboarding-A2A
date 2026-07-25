@@ -308,11 +308,12 @@ class LangflowClient:
 
     @classmethod
     def _extract_result(cls, raw: Any) -> dict[str, Any]:
-        embedded = cls._find_result_object(raw)
+        embedded = cls._coerce_result_object(raw)
         if embedded is not None:
             return embedded
 
         standard_paths = [
+            ("text",),
             ("outputs", 0, "outputs", 0, "results", "message", "text"),
             ("outputs", 0, "outputs", 0, "results", "text", "data", "text"),
             ("message",),
@@ -323,12 +324,16 @@ class LangflowClient:
             if isinstance(candidate, str):
                 parsed = cls._parse_json_text(candidate)
                 if parsed is not None:
-                    return parsed
+                    result = cls._coerce_result_object(parsed)
+                    if result is not None:
+                        return result
 
         for candidate in cls._collect_strings(raw):
             parsed = cls._parse_json_text(candidate)
             if parsed is not None:
-                return parsed
+                result = cls._coerce_result_object(parsed)
+                if result is not None:
+                    return result
 
         raise LangflowInvocationError(
             "No structured AgentResult JSON was found in the Langflow response"
@@ -347,6 +352,10 @@ class LangflowClient:
                     return None
                 current = current.get(key)
         return current
+
+    @classmethod
+    def _coerce_result_object(cls, value: Any) -> dict[str, Any] | None:
+        return cls._find_result_object(value)
 
     @classmethod
     def _find_result_object(cls, value: Any) -> dict[str, Any] | None:

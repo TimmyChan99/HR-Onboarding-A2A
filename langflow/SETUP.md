@@ -197,3 +197,8 @@ For Knowledge and Planning, replace `profile` in the callback URL with the agent
 ```
 
 The callback endpoint returns `202` when it matches an active task. The executor must return the usual `AgentResult` with its required artifact type. A full `GENERATE_PLAN` needs all three agents configured; a Profile-only test needs only `LANGFLOW_PROFILE_WEBHOOK_URL`.
+
+If Langflow exposes the final object through a text output, the callback can send
+the same payload wrapped as `{"text": {...}}`. The server also accepts the
+callback envelope under `result`, `output`, or `data`, and parses `text` when it
+is a JSON string.

@@ -50,6 +50,47 @@ def profile_result_with_structured_warning() -> dict[str, object]:
     return result
 
 
+def callback_payload() -> dict[str, object]:
+    return {
+        "request_id": "req-123",
+        "run_id": "run-123",
+        "correlation_id": "case-123:req-123",
+        "result": profile_result_with_structured_warning(),
+    }
+
+
+def test_executor_callback_accepts_text_object_wrapper() -> None:
+    callback = ExecutorWebhookCallback.model_validate({"text": callback_payload()})
+
+    assert callback.request_id == "req-123"
+    assert callback.result.artifact_type == "EMPLOYEE_PROFILE_CONTEXT"
+
+
+def test_executor_callback_accepts_text_json_string_wrapper() -> None:
+    callback = ExecutorWebhookCallback.model_validate(
+        {"text": json.dumps(callback_payload())}
+    )
+
+    assert callback.run_id == "run-123"
+    assert callback.result.data["employee"]["employee_id"] == "employee-123"
+
+
+def test_executor_callback_accepts_fenced_text_json_wrapper() -> None:
+    callback = ExecutorWebhookCallback.model_validate(
+        {"text": f"```json\n{json.dumps(callback_payload())}\n```"}
+    )
+
+    assert callback.correlation_id == "case-123:req-123"
+
+
+def test_langflow_result_extraction_accepts_text_callback_wrapper() -> None:
+    extracted = LangflowClient._extract_result(
+        {"text": json.dumps(callback_payload())}
+    )
+
+    assert extracted["artifact_type"] == "EMPLOYEE_PROFILE_CONTEXT"
+
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_webhook_mode_posts_raw_command_to_agent_webhook() -> None:

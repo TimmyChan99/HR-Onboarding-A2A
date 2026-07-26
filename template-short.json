@@ -1,0 +1,223 @@
+[
+  {
+    "template_id": "tpl-frontend-v1",
+    "template_name": "Frontend Developer Onboarding",
+    "status": "ACTIVE",
+    "supported_operations": ["GENERATE_PLAN"],
+    "matching_criteria": {
+      "roles": [
+        "Frontend Developer",
+        "Frontend Engineer",
+        "UI Developer"
+      ],
+      "job_families": [
+        "SOFTWARE_DEVELOPMENT",
+        "ENGINEERING"
+      ],
+      "departments": [
+        "engineering",
+        "technology"
+      ]
+    },
+    "default_duration_days": 30,
+    "phases": [
+      {
+        "phase_key": "preboarding",
+        "name": "Preboarding",
+        "tasks": [
+          {
+            "task_key": "prepare_equipment",
+            "title": "Prepare development equipment",
+            "category": "IT_SETUP",
+            "owner_role": "IT",
+            "mandatory": true,
+            "day_number": -3,
+            "dependencies": []
+          },
+          {
+            "task_key": "create_accounts",
+            "title": "Create company and engineering accounts",
+            "category": "ACCESS",
+            "owner_role": "IT",
+            "mandatory": true,
+            "day_number": -2,
+            "dependencies": []
+          }
+        ]
+      },
+      {
+        "phase_key": "setup",
+        "name": "Welcome and Development Setup",
+        "tasks": [
+          {
+            "task_key": "security_training",
+            "title": "Complete security training",
+            "category": "SECURITY",
+            "owner_role": "EMPLOYEE",
+            "mandatory": true,
+            "day_number": 1,
+            "dependencies": []
+          },
+          {
+            "task_key": "development_setup",
+            "title": "Configure the development environment",
+            "category": "IT_SETUP",
+            "owner_role": "EMPLOYEE",
+            "mandatory": true,
+            "day_number": 3,
+            "dependencies": ["create_accounts"]
+          },
+          {
+            "task_key": "architecture_review",
+            "title": "Review frontend architecture and practices",
+            "category": "ROLE_BASED",
+            "owner_role": "BUDDY",
+            "mandatory": true,
+            "day_number": 5,
+            "dependencies": ["development_setup"]
+          }
+        ]
+      },
+      {
+        "phase_key": "contribution",
+        "name": "Guided Contribution",
+        "tasks": [
+          {
+            "task_key": "first_task",
+            "title": "Complete a guided frontend task",
+            "category": "PRACTICAL",
+            "owner_role": "EMPLOYEE",
+            "mandatory": true,
+            "day_number": 12,
+            "dependencies": ["architecture_review"]
+          },
+          {
+            "task_key": "final_review",
+            "title": "Complete final onboarding review",
+            "category": "CHECKPOINT",
+            "owner_role": "MANAGER",
+            "mandatory": true,
+            "day_number": 30,
+            "dependencies": ["first_task"]
+          }
+        ]
+      }
+    ],
+    "success_criteria": [
+      "Development access is available",
+      "Development environment works",
+      "A frontend task is completed",
+      "Final review is completed"
+    ]
+  },
+  {
+    "template_id": "tpl-generic-v1",
+    "template_name": "Generic Employee Onboarding",
+    "status": "ACTIVE",
+    "supported_operations": ["GENERATE_PLAN"],
+    "matching_criteria": {
+      "roles": ["*"],
+      "job_families": ["*"],
+      "departments": ["*"]
+    },
+    "default_duration_days": 30,
+    "phases": [
+      {
+        "phase_key": "preboarding",
+        "name": "Preboarding",
+        "tasks": [
+          {
+            "task_key": "verify_information",
+            "title": "Verify employee information",
+            "category": "ADMINISTRATIVE",
+            "owner_role": "HR",
+            "mandatory": true,
+            "day_number": -5,
+            "dependencies": []
+          },
+          {
+            "task_key": "prepare_equipment",
+            "title": "Prepare work equipment and accounts",
+            "category": "IT_SETUP",
+            "owner_role": "IT",
+            "mandatory": true,
+            "day_number": -2,
+            "dependencies": ["verify_information"]
+          }
+        ]
+      },
+      {
+        "phase_key": "orientation",
+        "name": "Welcome and Role Orientation",
+        "tasks": [
+          {
+            "task_key": "hr_welcome",
+            "title": "Complete HR and company orientation",
+            "category": "ORIENTATION",
+            "owner_role": "HR",
+            "mandatory": true,
+            "day_number": 1,
+            "dependencies": []
+          },
+          {
+            "task_key": "security_training",
+            "title": "Complete security and privacy training",
+            "category": "SECURITY",
+            "owner_role": "EMPLOYEE",
+            "mandatory": true,
+            "day_number": 1,
+            "dependencies": []
+          },
+          {
+            "task_key": "role_orientation",
+            "title": "Review role expectations and tools",
+            "category": "ROLE_BASED",
+            "owner_role": "MANAGER",
+            "mandatory": true,
+            "day_number": 3,
+            "dependencies": ["hr_welcome"]
+          }
+        ]
+      },
+      {
+        "phase_key": "contribution",
+        "name": "Guided Work and Review",
+        "tasks": [
+          {
+            "task_key": "guided_task",
+            "title": "Complete a guided role task",
+            "category": "PRACTICAL",
+            "owner_role": "EMPLOYEE",
+            "mandatory": true,
+            "day_number": 12,
+            "dependencies": ["role_orientation"]
+          },
+          {
+            "task_key": "manager_review",
+            "title": "Complete final manager review",
+            "category": "CHECKPOINT",
+            "owner_role": "MANAGER",
+            "mandatory": true,
+            "day_number": 30,
+            "dependencies": ["guided_task"]
+          },
+          {
+            "task_key": "hr_validation",
+            "title": "Validate onboarding completion",
+            "category": "CHECKPOINT",
+            "owner_role": "HR",
+            "mandatory": true,
+            "day_number": 30,
+            "dependencies": ["manager_review"]
+          }
+        ]
+      }
+    ],
+    "success_criteria": [
+      "Required equipment and access are available",
+      "Mandatory training is complete",
+      "A guided role task is completed",
+      "Manager and HR reviews are complete"
+    ]
+  }
+]

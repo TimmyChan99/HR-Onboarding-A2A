@@ -184,6 +184,8 @@ and ordered calls:
 
 Use `parallel` for independent Profile and Knowledge calls. Call Planning only after required upstream artifacts are available.
 
+Long-running dispatches are resumable. If agent work exceeds `DISPATCH_WAIT_SECONDS`, the MCP tool returns `TASK_STATE_WORKING` with `DISPATCH_IN_PROGRESS` while the server keeps the A2A work running in the background. WF-01 should retry the exact same `dispatch_onboarding_agents` arguments to receive either another working response or the cached completed artifact.
+
 `POST /orchestrator/dispatch` remains available with `X-A2A-API-Key` for Postman/cURL tests, diagnostics, and non-MCP clients. WF-01 uses `Authorization: Bearer <MCP_BEARER_TOKEN>` on `/mcp`; the two credentials are intentionally separate.
 
 Examples for all four operations are under [examples](examples/). See also [docs/operation-routing.md](docs/operation-routing.md), [docs/endpoints.md](docs/endpoints.md), and the rendered Agent Card examples under [docs/agent-cards](docs/agent-cards/).
@@ -369,6 +371,8 @@ KNOWLEDGE_AGENT_MODE=langflow
 LANGFLOW_PROFILE_FLOW_ID=your-profile-flow-id
 LANGFLOW_KNOWLEDGE_FLOW_ID=your-knowledge-flow-id
 LANGFLOW_PLANNING_FLOW_ID=your-planning-flow-id
+DISPATCH_WAIT_SECONDS=5
+DISPATCH_RESULT_TTL_SECONDS=900
 ```
 
 Choose exactly one executor transport for all agents:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import re
@@ -33,6 +34,12 @@ class WebhookCallbackKey:
     correlation_id: str
 
 
+@dataclass(slots=True)
+class WebhookCallbackRegistration:
+    fingerprint: str
+    future: asyncio.Future[AgentResult]
+
+
 class LangflowClient:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -51,14 +58,16 @@ class LangflowClient:
             verify=settings.verify_tls,
             headers=headers,
         )
-        self._webhook_callbacks: dict[WebhookCallbackKey, asyncio.Future[AgentResult]] = {}
+        self._webhook_callbacks: dict[
+            WebhookCallbackKey, WebhookCallbackRegistration
+        ] = {}
         self._callback_lock = asyncio.Lock()
 
     async def close(self) -> None:
         async with self._callback_lock:
-            for callback in self._webhook_callbacks.values():
-                if not callback.done():
-                    callback.cancel()
+            for registration in self._webhook_callbacks.values():
+                if not registration.future.done():
+                    registration.future.cancel()
             self._webhook_callbacks.clear()
         await self._client.aclose()
 
@@ -171,27 +180,38 @@ class LangflowClient:
         expected_artifact_type: str,
     ) -> AgentResult:
         key = self._callback_key(agent_key, command)
-        callback = await self._register_webhook_callback(key)
+        command_fingerprint = self._command_fingerprint(command)
+        callback, should_invoke_webhook = await self._register_webhook_callback(
+            key,
+            command_fingerprint,
+        )
         started = time.perf_counter()
 
         try:
-            response = await self._post_webhook(agent_key, command)
-            if response.status_code in _RETRYABLE_STATUS:
-                raise LangflowInvocationError(
-                    f"Langflow webhook returned retryable HTTP {response.status_code}",
-                    retryable=True,
-                )
-            response.raise_for_status()
+            if should_invoke_webhook:
+                response = await self._post_webhook(agent_key, command)
+                if response.status_code in _RETRYABLE_STATUS:
+                    raise LangflowInvocationError(
+                        f"Langflow webhook returned retryable HTTP {response.status_code}",
+                        retryable=True,
+                    )
+                response.raise_for_status()
 
-            direct_result = self._direct_result_or_none(response)
-            result = (
-                direct_result
-                if direct_result is not None
-                else await asyncio.wait_for(
+                direct_result = self._direct_result_or_none(response)
+                if direct_result is not None:
+                    result = direct_result
+                    if not callback.done():
+                        callback.set_result(result)
+                else:
+                    result = await asyncio.wait_for(
+                        callback,
+                        timeout=self.settings.langflow_timeout_seconds,
+                    )
+            else:
+                result = await asyncio.wait_for(
                     callback,
                     timeout=self.settings.langflow_timeout_seconds,
                 )
-            )
             if result.artifact_type != expected_artifact_type:
                 raise LangflowInvocationError(
                     "Langflow returned artifact_type "
@@ -229,29 +249,47 @@ class LangflowClient:
             correlation_id=callback.correlation_id,
         )
         async with self._callback_lock:
-            waiting = self._webhook_callbacks.get(key)
-            if waiting is None:
+            registration = self._webhook_callbacks.get(key)
+            if registration is None:
                 return False
-            if not waiting.done():
-                waiting.set_result(callback.result)
+            if not registration.future.done():
+                registration.future.set_result(callback.result)
             return True
 
     async def _register_webhook_callback(
         self,
         key: WebhookCallbackKey,
-    ) -> asyncio.Future[AgentResult]:
+        command_fingerprint: str,
+    ) -> tuple[asyncio.Future[AgentResult], bool]:
         async with self._callback_lock:
-            if key in self._webhook_callbacks:
+            registration = self._webhook_callbacks.get(key)
+            if registration is not None:
+                if registration.fingerprint == command_fingerprint:
+                    logger.info(
+                        "Joining duplicate in-flight Langflow webhook request",
+                        extra={"agent": key.agent_key},
+                    )
+                    return registration.future, False
                 raise LangflowInvocationError(
-                    "A webhook callback is already pending for this agent request"
+                    "A webhook callback is already pending for this agent request "
+                    "with a different payload. Use a unique request_id, run_id, "
+                    "or correlation_id for separate work."
                 )
             callback: asyncio.Future[AgentResult] = asyncio.get_running_loop().create_future()
-            self._webhook_callbacks[key] = callback
-            return callback
+            self._webhook_callbacks[key] = WebhookCallbackRegistration(
+                fingerprint=command_fingerprint,
+                future=callback,
+            )
+            return callback, True
 
     async def _remove_webhook_callback(self, key: WebhookCallbackKey) -> None:
         async with self._callback_lock:
             self._webhook_callbacks.pop(key, None)
+
+    @staticmethod
+    def _command_fingerprint(command: dict[str, Any]) -> str:
+        canonical = json.dumps(command, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     @staticmethod
     def _callback_key(agent_key: str, command: dict[str, Any]) -> WebhookCallbackKey:

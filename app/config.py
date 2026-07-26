@@ -49,11 +49,16 @@ class Settings(BaseSettings):
     langflow_profile_webhook_url: str = ""
     langflow_knowledge_webhook_url: str = ""
     langflow_planning_webhook_url: str = ""
-    langflow_timeout_seconds: float = 180.0
+    langflow_timeout_seconds: float = 1000.0
     langflow_max_attempts: int = 3
     langflow_output_component: str = ""
     langflow_api_style: Literal["legacy", "wrapped", "auto"] = "auto"
-    a2a_client_timeout_seconds: float = 240.0
+    a2a_client_timeout_seconds: float = Field(
+        default=1500.0,
+        validation_alias="A2A_CLIENT_TIMEOUT_SECONDS",
+    )
+    dispatch_wait_seconds: float = 5.0
+    dispatch_result_ttl_seconds: float = 900.0
     verify_tls: bool = True
 
     google_api_key: SecretStr = Field(default=SecretStr(""))

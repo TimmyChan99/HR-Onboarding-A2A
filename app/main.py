@@ -40,7 +40,7 @@ internal_knowledge_agent = (
     else None
 )
 internal_a2a_client = InternalA2AClient(settings)
-dispatcher = A2ADispatcher(internal_a2a_client)
+dispatcher = A2ADispatcher(internal_a2a_client, settings)
 onboarding_mcp = create_onboarding_mcp(
     dispatcher,
     public_base_url=settings.public_base_url,
@@ -82,6 +82,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         try:
             yield
         finally:
+            await dispatcher.close()
             await internal_a2a_client.close()
             await langflow_client.close()
             await engine.dispose()

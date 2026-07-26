@@ -227,6 +227,112 @@ async def test_webhook_mode_waits_for_the_executor_callback() -> None:
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_webhook_mode_joins_exact_duplicate_in_flight_request() -> None:
+    webhook_url = "https://stg-agentic.example/api/v1/webhook/profile-webhook"
+    triggered = asyncio.Event()
+
+    async def webhook_trigger(_: httpx.Request) -> httpx.Response:
+        triggered.set()
+        return httpx.Response(202, json={"status": "in progress"})
+
+    route = respx.post(webhook_url).mock(side_effect=webhook_trigger)
+    settings = Settings(
+        _env_file=None,
+        langflow_execution_mode="webhook",
+        langflow_profile_webhook_url=webhook_url,
+    )
+    client = LangflowClient(settings)
+
+    try:
+        first = asyncio.create_task(
+            client.run_agent(
+                agent_key="profile",
+                command=command(),
+                session_id="case-123:req-123",
+                expected_artifact_type="EMPLOYEE_PROFILE_CONTEXT",
+            )
+        )
+        await asyncio.wait_for(triggered.wait(), timeout=1)
+        second = asyncio.create_task(
+            client.run_agent(
+                agent_key="profile",
+                command=command(),
+                session_id="case-123:req-123",
+                expected_artifact_type="EMPLOYEE_PROFILE_CONTEXT",
+            )
+        )
+        accepted = await client.complete_webhook_callback(
+            "profile",
+            ExecutorWebhookCallback(
+                request_id="req-123",
+                run_id="run-123",
+                correlation_id="case-123:req-123",
+                result=profile_result(),
+            ),
+        )
+        first_result, second_result = await asyncio.gather(first, second)
+    finally:
+        await client.close()
+
+    assert accepted is True
+    assert route.call_count == 1
+    assert first_result.data == second_result.data
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_webhook_mode_rejects_same_callback_ids_with_different_payload() -> None:
+    webhook_url = "https://stg-agentic.example/api/v1/webhook/profile-webhook"
+    triggered = asyncio.Event()
+
+    async def webhook_trigger(_: httpx.Request) -> httpx.Response:
+        triggered.set()
+        return httpx.Response(202, json={"status": "in progress"})
+
+    respx.post(webhook_url).mock(side_effect=webhook_trigger)
+    settings = Settings(
+        _env_file=None,
+        langflow_execution_mode="webhook",
+        langflow_profile_webhook_url=webhook_url,
+        langflow_timeout_seconds=1,
+    )
+    client = LangflowClient(settings)
+    conflicting_command = command()
+    conflicting_command["request"]["payload"] = {"changed": True}  # type: ignore[index]
+
+    try:
+        first = asyncio.create_task(
+            client.run_agent(
+                agent_key="profile",
+                command=command(),
+                session_id="case-123:req-123",
+                expected_artifact_type="EMPLOYEE_PROFILE_CONTEXT",
+            )
+        )
+        await asyncio.wait_for(triggered.wait(), timeout=1)
+        with pytest.raises(Exception, match="different payload"):
+            await client.run_agent(
+                agent_key="profile",
+                command=conflicting_command,
+                session_id="case-123:req-123",
+                expected_artifact_type="EMPLOYEE_PROFILE_CONTEXT",
+            )
+        await client.complete_webhook_callback(
+            "profile",
+            ExecutorWebhookCallback(
+                request_id="req-123",
+                run_id="run-123",
+                correlation_id="case-123:req-123",
+                result=profile_result(),
+            ),
+        )
+        await first
+    finally:
+        await client.close()
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_webhook_callback_accepts_structured_warnings() -> None:
     webhook_url = "https://stg-agentic.example/api/v1/webhook/profile-webhook"
     triggered = asyncio.Event()

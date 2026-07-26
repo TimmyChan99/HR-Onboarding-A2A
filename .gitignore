@@ -9,3 +9,5 @@ data/
 logs/
 *.db
 .DS_Store
+a2a-test-report.json
+payloads.json

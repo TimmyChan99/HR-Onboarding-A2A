@@ -1,0 +1,703 @@
+[
+    {
+  "template_id": "tpl-software-engineering-frontend-v1",
+  "template_version": "1.0.0",
+  "template_name": "Software Engineering Frontend Onboarding",
+  "template_type": "ROLE_BASED",
+  "status": "ACTIVE",
+  "supported_operations": [
+    "GENERATE_PLAN",
+    "REVISE_PLAN",
+    "ADAPT_PLAN"
+  ],
+  "default_locale": "en",
+  "supported_locales": [
+    "en",
+    "fr"
+  ],
+  "default_duration_days": 30,
+  "matching_criteria": {
+    "roles": [
+      "Frontend Developer",
+      "Frontend Engineer",
+      "Web Developer",
+      "UI Developer"
+    ],
+    "job_families": [
+      "SOFTWARE_DEVELOPMENT",
+      "ENGINEERING"
+    ],
+    "departments": [
+      "engineering",
+      "technology",
+      "product"
+    ],
+    "employment_types": [
+      "CDI",
+      "CDD",
+      "CONTRACTOR",
+      "FULL_TIME"
+    ],
+    "locations": [
+      "*"
+    ],
+    "priority": 100
+  },
+  "required_context_fields": [
+    "target_role",
+    "department"
+  ],
+  "optional_context_fields": [
+    "experience_level",
+    "existing_skills",
+    "skill_gaps",
+    "location",
+    "preferred_language",
+    "start_date"
+  ],
+  "phases": [
+    {
+      "phase_key": "preboarding",
+      "name": "Preboarding and Preparation",
+      "sequence": 1,
+      "default_start_day": -5,
+      "default_end_day": 0,
+      "objective": "Prepare administrative information, equipment, accounts, and the employee's first-week schedule.",
+      "tasks": [
+        {
+          "task_key": "confirm_employee_information",
+          "title": "Confirm employee onboarding information",
+          "description": "Verify the employee's role, department, manager, start date, location, employment type, and preferred language.",
+          "category": "ADMINISTRATIVE",
+          "owner_role": "HR",
+          "mandatory": true,
+          "default_day_number": -5,
+          "estimated_duration_hours": 0.5,
+          "dependencies": [],
+          "completion_criteria": [
+            "Required employee information is confirmed",
+            "Manager and department are confirmed",
+            "Start date is confirmed"
+          ]
+        },
+        {
+          "task_key": "prepare_equipment",
+          "title": "Prepare workstation and equipment",
+          "description": "Prepare the approved laptop, accessories, and any role-required development equipment.",
+          "category": "IT_SETUP",
+          "owner_role": "IT",
+          "mandatory": true,
+          "default_day_number": -3,
+          "estimated_duration_hours": 1,
+          "dependencies": [
+            "confirm_employee_information"
+          ],
+          "completion_criteria": [
+            "Laptop is assigned",
+            "Required accessories are prepared",
+            "Equipment inventory is recorded"
+          ]
+        },
+        {
+          "task_key": "create_core_accounts",
+          "title": "Create core company accounts",
+          "description": "Create the employee's approved company identity, email, communication, HR, and identity-provider accounts.",
+          "category": "ACCESS",
+          "owner_role": "IT",
+          "mandatory": true,
+          "default_day_number": -2,
+          "estimated_duration_hours": 1,
+          "dependencies": [
+            "confirm_employee_information"
+          ],
+          "completion_criteria": [
+            "Company identity is created",
+            "Company email is active",
+            "Core communication access is available",
+            "HR platform access is available"
+          ]
+        },
+        {
+          "task_key": "prepare_first_week_agenda",
+          "title": "Prepare first-week agenda",
+          "description": "Schedule orientation, team introductions, manager sessions, security training, and role setup activities.",
+          "category": "ORIENTATION",
+          "owner_role": "MANAGER",
+          "mandatory": true,
+          "default_day_number": -2,
+          "estimated_duration_hours": 0.5,
+          "dependencies": [
+            "confirm_employee_information"
+          ],
+          "completion_criteria": [
+            "First-week meetings are scheduled",
+            "Relevant participants are invited",
+            "Employee can access the agenda"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_key": "day_one",
+      "name": "Welcome and Core Setup",
+      "sequence": 2,
+      "default_start_day": 1,
+      "default_end_day": 2,
+      "objective": "Welcome the employee and complete essential administrative, security, and access setup.",
+      "tasks": [
+        {
+          "task_key": "hr_welcome",
+          "title": "Complete HR welcome session",
+          "description": "Present essential HR processes, working arrangements, internal support channels, and onboarding expectations.",
+          "category": "ORIENTATION",
+          "owner_role": "HR",
+          "mandatory": true,
+          "default_day_number": 1,
+          "estimated_duration_hours": 1,
+          "dependencies": [
+            "confirm_employee_information"
+          ],
+          "completion_criteria": [
+            "HR orientation is completed",
+            "Employee knows the main HR support channels",
+            "Mandatory administrative actions are explained"
+          ]
+        },
+        {
+          "task_key": "equipment_handover",
+          "title": "Complete equipment handover",
+          "description": "Provide the assigned workstation and confirm that the employee can sign in securely.",
+          "category": "IT_SETUP",
+          "owner_role": "IT",
+          "mandatory": true,
+          "default_day_number": 1,
+          "estimated_duration_hours": 1,
+          "dependencies": [
+            "prepare_equipment",
+            "create_core_accounts"
+          ],
+          "completion_criteria": [
+            "Employee receives assigned equipment",
+            "Device login succeeds",
+            "Required security controls are enabled"
+          ]
+        },
+        {
+          "task_key": "security_training",
+          "title": "Complete mandatory security and privacy training",
+          "description": "Complete required training covering password security, phishing, confidential information, privacy, and acceptable use.",
+          "category": "SECURITY",
+          "owner_role": "EMPLOYEE",
+          "mandatory": true,
+          "default_day_number": 1,
+          "estimated_duration_hours": 1.5,
+          "dependencies": [
+            "equipment_handover"
+          ],
+          "completion_criteria": [
+            "Mandatory security training is completed",
+            "Required acknowledgement is recorded"
+          ]
+        },
+        {
+          "task_key": "team_introduction",
+          "title": "Meet the team and onboarding buddy",
+          "description": "Introduce the employee to the team, key collaborators, manager, and assigned onboarding buddy.",
+          "category": "ORIENTATION",
+          "owner_role": "MANAGER",
+          "mandatory": true,
+          "default_day_number": 1,
+          "estimated_duration_hours": 1,
+          "dependencies": [],
+          "completion_criteria": [
+            "Team introduction is completed",
+            "Buddy is identified",
+            "Key collaboration contacts are known"
+          ]
+        },
+        {
+          "task_key": "manager_expectations",
+          "title": "Align on role expectations",
+          "description": "Review responsibilities, initial objectives, communication practices, success indicators, and the onboarding plan.",
+          "category": "CHECKPOINT",
+          "owner_role": "MANAGER",
+          "mandatory": true,
+          "default_day_number": 2,
+          "estimated_duration_hours": 1,
+          "dependencies": [
+            "team_introduction"
+          ],
+          "completion_criteria": [
+            "Responsibilities are understood",
+            "Initial objectives are documented",
+            "Communication cadence is agreed"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_key": "engineering_environment",
+      "name": "Engineering Access and Development Environment",
+      "sequence": 3,
+      "default_start_day": 2,
+      "default_end_day": 5,
+      "objective": "Provide approved engineering access and establish a functioning local development environment.",
+      "tasks": [
+        {
+          "task_key": "grant_engineering_access",
+          "title": "Grant approved engineering access",
+          "description": "Grant access to the approved source-control organization, project tracker, documentation platform, design workspace, and development communication channels.",
+          "category": "ACCESS",
+          "owner_role": "IT",
+          "mandatory": true,
+          "default_day_number": 2,
+          "estimated_duration_hours": 1,
+          "dependencies": [
+            "security_training",
+            "manager_expectations"
+          ],
+          "completion_criteria": [
+            "Approved source-control access works",
+            "Project tracker access works",
+            "Engineering documentation is accessible",
+            "Design workspace access works when required"
+          ]
+        },
+        {
+          "task_key": "review_engineering_security",
+          "title": "Review engineering security practices",
+          "description": "Review repository permissions, secrets handling, branch protection, dependency security, and rules for production access.",
+          "category": "SECURITY",
+          "owner_role": "SECURITY",
+          "mandatory": true,
+          "default_day_number": 2,
+          "estimated_duration_hours": 1,
+          "dependencies": [
+            "security_training"
+          ],
+          "completion_criteria": [
+            "Secrets-handling rules are understood",
+            "Repository security rules are understood",
+            "Production-access restrictions are understood"
+          ]
+        },
+        {
+          "task_key": "setup_development_environment",
+          "title": "Set up the local development environment",
+          "description": "Install approved tools, clone the required repositories, configure the local environment, and start the application according to internal documentation.",
+          "category": "IT_SETUP",
+          "owner_role": "EMPLOYEE",
+          "mandatory": true,
+          "default_day_number": 3,
+          "estimated_duration_hours": 4,
+          "dependencies": [
+            "grant_engineering_access",
+            "review_engineering_security"
+          ],
+          "completion_criteria": [
+            "Required repositories are cloned",
+            "Dependencies install successfully",
+            "Application starts locally",
+            "Required automated checks can run"
+          ]
+        },
+        {
+          "task_key": "validate_environment",
+          "title": "Validate the development environment",
+          "description": "Validate the local setup with the onboarding buddy and resolve blocking configuration issues.",
+          "category": "CHECKPOINT",
+          "owner_role": "BUDDY",
+          "mandatory": true,
+          "default_day_number": 4,
+          "estimated_duration_hours": 1,
+          "dependencies": [
+            "setup_development_environment"
+          ],
+          "completion_criteria": [
+            "Buddy confirms the environment works",
+            "Blocking setup issues are resolved or documented"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_key": "product_and_codebase",
+      "name": "Product, Architecture, and Codebase Introduction",
+      "sequence": 4,
+      "default_start_day": 4,
+      "default_end_day": 10,
+      "objective": "Build sufficient product and technical context before independent delivery.",
+      "tasks": [
+        {
+          "task_key": "product_overview",
+          "title": "Complete product and customer overview",
+          "description": "Review the product purpose, principal users, important workflows, and the frontend team's responsibilities.",
+          "category": "TRAINING",
+          "owner_role": "MANAGER",
+          "mandatory": true,
+          "default_day_number": 4,
+          "estimated_duration_hours": 2,
+          "dependencies": [
+            "manager_expectations"
+          ],
+          "completion_criteria": [
+            "Main product workflows can be explained",
+            "Primary users are understood",
+            "Frontend team responsibilities are understood"
+          ]
+        },
+        {
+          "task_key": "frontend_architecture_overview",
+          "title": "Review frontend architecture",
+          "description": "Review the application structure, state management, API integration, routing, component conventions, testing approach, styling system, localization, and deployment flow.",
+          "category": "ROLE_BASED",
+          "owner_role": "BUDDY",
+          "mandatory": true,
+          "default_day_number": 5,
+          "estimated_duration_hours": 3,
+          "dependencies": [
+            "validate_environment",
+            "product_overview"
+          ],
+          "completion_criteria": [
+            "Main frontend modules are identified",
+            "Data-flow conventions are understood",
+            "Testing and styling conventions are understood"
+          ]
+        },
+        {
+          "task_key": "review_engineering_workflow",
+          "title": "Review engineering delivery workflow",
+          "description": "Review ticket refinement, branching, commits, pull requests, reviews, automated checks, QA, release, and incident-reporting practices.",
+          "category": "ROLE_BASED",
+          "owner_role": "BUDDY",
+          "mandatory": true,
+          "default_day_number": 5,
+          "estimated_duration_hours": 2,
+          "dependencies": [
+            "grant_engineering_access"
+          ],
+          "completion_criteria": [
+            "Delivery workflow is understood",
+            "Pull-request expectations are understood",
+            "QA and release responsibilities are understood"
+          ]
+        },
+        {
+          "task_key": "complete_codebase_exploration",
+          "title": "Complete guided codebase exploration",
+          "description": "Trace one representative user journey through frontend components, state, API calls, and backend integration.",
+          "category": "PRACTICAL",
+          "owner_role": "EMPLOYEE",
+          "mandatory": true,
+          "default_day_number": 7,
+          "estimated_duration_hours": 4,
+          "dependencies": [
+            "frontend_architecture_overview",
+            "review_engineering_workflow"
+          ],
+          "completion_criteria": [
+            "A representative user journey is traced",
+            "Relevant modules and integrations are identified",
+            "Questions and findings are documented"
+          ]
+        },
+        {
+          "task_key": "week_one_checkpoint",
+          "title": "Complete first-week checkpoint",
+          "description": "Review access, environment readiness, role understanding, blockers, and adjustments required for the remaining plan.",
+          "category": "CHECKPOINT",
+          "owner_role": "MANAGER",
+          "mandatory": true,
+          "default_day_number": 7,
+          "estimated_duration_hours": 1,
+          "dependencies": [
+            "complete_codebase_exploration"
+          ],
+          "completion_criteria": [
+            "Access blockers are reviewed",
+            "Role understanding is reviewed",
+            "Plan adjustments are documented"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_key": "guided_contribution",
+      "name": "Guided Role Contribution",
+      "sequence": 5,
+      "default_start_day": 8,
+      "default_end_day": 20,
+      "objective": "Apply team conventions through a limited, reviewable contribution.",
+      "tasks": [
+        {
+          "task_key": "select_first_task",
+          "title": "Select the first guided engineering task",
+          "description": "Select a low-risk frontend task with clear scope, acceptance criteria, and an available reviewer.",
+          "category": "ROLE_BASED",
+          "owner_role": "MANAGER",
+          "mandatory": true,
+          "default_day_number": 8,
+          "estimated_duration_hours": 0.5,
+          "dependencies": [
+            "week_one_checkpoint"
+          ],
+          "completion_criteria": [
+            "Task scope is appropriate",
+            "Acceptance criteria are clear",
+            "Reviewer is assigned"
+          ]
+        },
+        {
+          "task_key": "implement_first_task",
+          "title": "Implement the first guided frontend task",
+          "description": "Implement the selected task using the team's frontend, accessibility, localization, testing, and code-quality conventions.",
+          "category": "PRACTICAL",
+          "owner_role": "EMPLOYEE",
+          "mandatory": true,
+          "default_day_number": 12,
+          "estimated_duration_hours": 12,
+          "dependencies": [
+            "select_first_task",
+            "complete_codebase_exploration"
+          ],
+          "completion_criteria": [
+            "Acceptance criteria are satisfied",
+            "Relevant tests are added or updated",
+            "Accessibility and responsive behavior are checked",
+            "Pull request is opened"
+          ]
+        },
+        {
+          "task_key": "complete_code_review",
+          "title": "Complete review and feedback cycle",
+          "description": "Address review feedback and document important project conventions learned from the first contribution.",
+          "category": "PRACTICAL",
+          "owner_role": "EMPLOYEE",
+          "mandatory": true,
+          "default_day_number": 15,
+          "estimated_duration_hours": 4,
+          "dependencies": [
+            "implement_first_task"
+          ],
+          "completion_criteria": [
+            "Review feedback is addressed",
+            "Required automated checks pass",
+            "Contribution is approved or ready for final validation"
+          ]
+        },
+        {
+          "task_key": "role_skill_training",
+          "title": "Complete targeted role-skill learning",
+          "description": "Complete targeted learning selected from verified skill gaps or required project technologies.",
+          "category": "TRAINING",
+          "owner_role": "EMPLOYEE",
+          "mandatory": false,
+          "default_day_number": 16,
+          "estimated_duration_hours": 6,
+          "dependencies": [
+            "frontend_architecture_overview"
+          ],
+          "completion_criteria": [
+            "Assigned learning material is completed",
+            "A practical application or summary is produced"
+          ],
+          "personalization_rules": {
+            "include_when": [
+              "profile_context.skill_gaps is not empty",
+              "knowledge_context.required_role_skills is not empty"
+            ],
+            "exclude_when": [
+              "No verified skill gap or required learning exists"
+            ]
+          }
+        },
+        {
+          "task_key": "week_two_checkpoint",
+          "title": "Complete progress checkpoint",
+          "description": "Review contribution quality, technical understanding, collaboration, blockers, and the next level of responsibility.",
+          "category": "CHECKPOINT",
+          "owner_role": "MANAGER",
+          "mandatory": true,
+          "default_day_number": 15,
+          "estimated_duration_hours": 1,
+          "dependencies": [
+            "complete_code_review"
+          ],
+          "completion_criteria": [
+            "First contribution is reviewed",
+            "Strengths and gaps are documented",
+            "Next objectives are agreed"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_key": "independent_contribution",
+      "name": "Increasing Independence and Final Review",
+      "sequence": 6,
+      "default_start_day": 16,
+      "default_end_day": 30,
+      "objective": "Demonstrate increasing autonomy and establish post-onboarding development objectives.",
+      "tasks": [
+        {
+          "task_key": "complete_second_contribution",
+          "title": "Complete a second role-based contribution",
+          "description": "Complete a moderately scoped frontend contribution with reduced supervision and full adherence to delivery standards.",
+          "category": "PRACTICAL",
+          "owner_role": "EMPLOYEE",
+          "mandatory": true,
+          "default_day_number": 22,
+          "estimated_duration_hours": 16,
+          "dependencies": [
+            "week_two_checkpoint"
+          ],
+          "completion_criteria": [
+            "Task is delivered with reduced supervision",
+            "Tests and documentation are updated when required",
+            "Review feedback is addressed"
+          ]
+        },
+        {
+          "task_key": "document_learning",
+          "title": "Document onboarding learning and remaining questions",
+          "description": "Summarize product knowledge, technical conventions, useful resources, remaining questions, and proposed documentation improvements.",
+          "category": "ROLE_BASED",
+          "owner_role": "EMPLOYEE",
+          "mandatory": true,
+          "default_day_number": 25,
+          "estimated_duration_hours": 2,
+          "dependencies": [
+            "complete_second_contribution"
+          ],
+          "completion_criteria": [
+            "Learning summary is documented",
+            "Remaining questions are recorded",
+            "At least one documentation improvement is proposed when applicable"
+          ]
+        },
+        {
+          "task_key": "final_manager_review",
+          "title": "Complete 30-day onboarding review",
+          "description": "Evaluate onboarding completion, access readiness, role understanding, delivery progress, support needs, and development objectives.",
+          "category": "CHECKPOINT",
+          "owner_role": "MANAGER",
+          "mandatory": true,
+          "default_day_number": 30,
+          "estimated_duration_hours": 1,
+          "dependencies": [
+            "document_learning"
+          ],
+          "completion_criteria": [
+            "Onboarding outcomes are reviewed",
+            "Remaining actions have owners",
+            "Development objectives are documented",
+            "Plan completion is recommended or an extension is proposed"
+          ]
+        },
+        {
+          "task_key": "hr_completion_validation",
+          "title": "Validate onboarding completion",
+          "description": "Verify that mandatory administrative, access, security, training, and review tasks are complete.",
+          "category": "CHECKPOINT",
+          "owner_role": "HR",
+          "mandatory": true,
+          "default_day_number": 30,
+          "estimated_duration_hours": 0.5,
+          "dependencies": [
+            "final_manager_review"
+          ],
+          "completion_criteria": [
+            "Mandatory task completion is verified",
+            "Outstanding actions are documented",
+            "Onboarding status is validated"
+          ]
+        }
+      ]
+    }
+  ],
+  "milestones": [
+    {
+      "milestone_key": "core_setup_complete",
+      "title": "Core setup completed",
+      "default_day_number": 2,
+      "reviewer_role": "IT",
+      "success_criteria": [
+        "Equipment is operational",
+        "Core company accounts are accessible",
+        "Mandatory security setup is completed"
+      ]
+    },
+    {
+      "milestone_key": "development_ready",
+      "title": "Development environment ready",
+      "default_day_number": 5,
+      "reviewer_role": "BUDDY",
+      "success_criteria": [
+        "Required engineering access works",
+        "Application runs locally",
+        "Development workflow is understood"
+      ]
+    },
+    {
+      "milestone_key": "first_contribution_reviewed",
+      "title": "First contribution reviewed",
+      "default_day_number": 15,
+      "reviewer_role": "MANAGER",
+      "success_criteria": [
+        "First role-based contribution is completed",
+        "Review feedback is addressed",
+        "Next objectives are agreed"
+      ]
+    },
+    {
+      "milestone_key": "onboarding_complete",
+      "title": "Thirty-day onboarding completed",
+      "default_day_number": 30,
+      "reviewer_role": "HR",
+      "success_criteria": [
+        "Mandatory onboarding tasks are complete",
+        "Employee can perform expected initial responsibilities",
+        "Post-onboarding objectives are documented"
+      ]
+    }
+  ],
+  "success_criteria": [
+    "The employee has the approved equipment and access required for the role",
+    "Mandatory administrative and security activities are complete",
+    "The local development environment is operational",
+    "The employee understands the product and frontend architecture",
+    "At least one reviewed role-based contribution is completed",
+    "Manager and HR completion reviews are recorded"
+  ],
+  "adaptation_rules": [
+    {
+      "rule_id": "adapt-experienced-engineer",
+      "condition": "profile_context.experience_level is SENIOR or LEAD",
+      "action": "Reduce introductory technical training and replace it with architecture, ownership, and system-level tasks",
+      "protected_tasks": [
+        "security_training",
+        "review_engineering_security",
+        "manager_expectations",
+        "final_manager_review",
+        "hr_completion_validation"
+      ]
+    },
+    {
+      "rule_id": "adapt-verified-skill-gap",
+      "condition": "profile_context.skill_gaps contains a skill required by knowledge_context",
+      "action": "Add or prioritize targeted learning and a practical task for the verified skill gap"
+    },
+    {
+      "rule_id": "adapt-missing-access",
+      "condition": "Required access remains unavailable",
+      "action": "Delay dependent practical tasks and add an access-resolution checkpoint"
+    }
+  ],
+  "source_metadata": {
+    "source_type": "CURATED_TEMPLATE",
+    "domain": "EMPLOYEE_ONBOARDING",
+    "review_required": true
+  }
+}
+]

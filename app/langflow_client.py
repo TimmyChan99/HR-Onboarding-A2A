@@ -12,12 +12,13 @@ from typing import Any
 import httpx
 
 from app.config import Settings
-from app.schemas import AgentResult, ExecutorWebhookCallback
+from app.schemas import AgentResult, ErrorItem, ExecutorWebhookCallback
 
 logger = logging.getLogger(__name__)
 
 _RETRYABLE_STATUS = {429, 502, 503, 504}
 _JSON_FENCE = re.compile(r"^```(?:json)?\s*(.*?)\s*```$", re.IGNORECASE | re.DOTALL)
+_JSON_FENCE_BLOCK = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.IGNORECASE | re.DOTALL)
 
 
 class LangflowInvocationError(RuntimeError):
@@ -101,6 +102,11 @@ class LangflowClient:
                     command=command,
                     session_id=session_id,
                 )
+                if response.status_code == 422:
+                    return self._failed_result_from_http_response(
+                        response,
+                        expected_artifact_type=expected_artifact_type,
+                    )
                 if response.status_code in _RETRYABLE_STATUS:
                     raise LangflowInvocationError(
                         f"Langflow returned retryable HTTP {response.status_code}",
@@ -190,6 +196,14 @@ class LangflowClient:
         try:
             if should_invoke_webhook:
                 response = await self._post_webhook(agent_key, command)
+                if response.status_code == 422:
+                    result = self._failed_result_from_http_response(
+                        response,
+                        expected_artifact_type=expected_artifact_type,
+                    )
+                    if not callback.done():
+                        callback.set_result(result)
+                    return result
                 if response.status_code in _RETRYABLE_STATUS:
                     raise LangflowInvocationError(
                         f"Langflow webhook returned retryable HTTP {response.status_code}",
@@ -433,13 +447,65 @@ class LangflowClient:
     @staticmethod
     def _parse_json_text(text: str) -> dict[str, Any] | None:
         candidate = text.strip()
-        fenced = _JSON_FENCE.match(candidate)
-        if fenced:
-            candidate = fenced.group(1).strip()
-        if not candidate.startswith("{"):
-            return None
+        for json_candidate in _json_candidates(candidate):
+            try:
+                parsed = json.loads(json_candidate)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, dict):
+                return parsed
+        return None
+
+    @staticmethod
+    def _failed_result_from_http_response(
+        response: httpx.Response,
+        *,
+        expected_artifact_type: str,
+    ) -> AgentResult:
         try:
-            parsed = json.loads(candidate)
+            detail: Any = response.json()
+        except (json.JSONDecodeError, ValueError):
+            detail = response.text
+        return AgentResult(
+            status="FAILED",
+            artifact_type=expected_artifact_type,
+            data={},
+            errors=[
+                ErrorItem.model_validate(
+                    {
+                        "code": f"HTTP_{response.status_code}",
+                        "message": (
+                            "Executor returned an unprocessable response"
+                            if response.status_code == 422
+                            else f"Executor returned HTTP {response.status_code}"
+                        ),
+                        "field": None,
+                        "retryable": False,
+                        "detail": detail,
+                    }
+                )
+            ],
+            metadata={"http_status_code": response.status_code},
+        )
+
+
+def _json_candidates(text: str) -> list[str]:
+    candidates = [text]
+
+    fenced = _JSON_FENCE.match(text)
+    if fenced:
+        candidates.append(fenced.group(1).strip())
+
+    candidates.extend(match.group(1).strip() for match in _JSON_FENCE_BLOCK.finditer(text))
+
+    decoder = json.JSONDecoder()
+    for index, char in enumerate(text):
+        if char != "{":
+            continue
+        try:
+            _, end = decoder.raw_decode(text[index:])
         except json.JSONDecodeError:
-            return None
-        return parsed if isinstance(parsed, dict) else None
+            continue
+        candidates.append(text[index : index + end])
+
+    return list(dict.fromkeys(candidates))

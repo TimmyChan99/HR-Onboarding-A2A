@@ -11,6 +11,7 @@ AgentKey = Literal["profile", "knowledge", "planning"]
 DispatchMode = Literal["parallel", "series"]
 ResultStatus = Literal["SUCCEEDED", "PARTIAL_SUCCESS", "FAILED"]
 _JSON_FENCE = re.compile(r"^```(?:json)?\s*(.*?)\s*```$", re.IGNORECASE | re.DOTALL)
+_JSON_FENCE_BLOCK = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.IGNORECASE | re.DOTALL)
 
 
 class ErrorItem(BaseModel):
@@ -135,14 +136,8 @@ class DispatchResponse(BaseModel):
 
 def _parse_wrapped_json(value: Any) -> Any:
     if isinstance(value, str):
-        candidate = value.strip()
-        fenced = _JSON_FENCE.match(candidate)
-        if fenced:
-            candidate = fenced.group(1).strip()
-        try:
-            return json.loads(candidate)
-        except json.JSONDecodeError:
-            return value
+        parsed = _parse_json_text(value)
+        return parsed if parsed is not None else value
     return value
 
 
@@ -153,3 +148,35 @@ def _looks_like_callback(value: Any) -> bool:
         "correlation_id",
         "result",
     }.issubset(value)
+
+
+def _parse_json_text(text: str) -> Any:
+    candidate = text.strip()
+    for json_candidate in _json_candidates(candidate):
+        try:
+            return json.loads(json_candidate)
+        except json.JSONDecodeError:
+            continue
+    return None
+
+
+def _json_candidates(text: str) -> list[str]:
+    candidates = [text]
+
+    full_fence = _JSON_FENCE.match(text)
+    if full_fence:
+        candidates.append(full_fence.group(1).strip())
+
+    candidates.extend(match.group(1).strip() for match in _JSON_FENCE_BLOCK.finditer(text))
+
+    decoder = json.JSONDecoder()
+    for index, char in enumerate(text):
+        if char != "{":
+            continue
+        try:
+            _, end = decoder.raw_decode(text[index:])
+        except json.JSONDecodeError:
+            continue
+        candidates.append(text[index : index + end])
+
+    return list(dict.fromkeys(candidates))

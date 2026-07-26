@@ -109,9 +109,41 @@ def test_executor_callback_accepts_fenced_text_json_wrapper() -> None:
     assert callback.correlation_id == "case-123:req-123"
 
 
+def test_executor_callback_extracts_json_fence_from_planning_prose() -> None:
+    callback = ExecutorWebhookCallback.model_validate(
+        {
+            "text": (
+                "Now I have all the context. Let me finalize the plan.\n\n"
+                "```json\n"
+                f"{json.dumps(callback_payload())}\n"
+                "```\n"
+                "Done."
+            )
+        }
+    )
+
+    assert callback.request_id == "req-123"
+    assert callback.result.status == "SUCCEEDED"
+
+
 def test_langflow_result_extraction_accepts_text_callback_wrapper() -> None:
     extracted = LangflowClient._extract_result(
         {"text": json.dumps(callback_payload())}
+    )
+
+    assert extracted["artifact_type"] == "EMPLOYEE_PROFILE_CONTEXT"
+
+
+def test_langflow_result_extraction_accepts_prose_with_fenced_json() -> None:
+    extracted = LangflowClient._extract_result(
+        {
+            "text": (
+                "Template selection complete.\n\n"
+                "```json\n"
+                f"{json.dumps(callback_payload())}\n"
+                "```"
+            )
+        }
     )
 
     assert extracted["artifact_type"] == "EMPLOYEE_PROFILE_CONTEXT"
@@ -223,6 +255,38 @@ async def test_webhook_mode_waits_for_the_executor_callback() -> None:
 
     assert accepted is True
     assert result.data["employee"]["employee_id"] == "employee-123"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_webhook_mode_returns_failed_result_on_executor_422() -> None:
+    webhook_url = "https://stg-agentic.example/api/v1/webhook/profile-webhook"
+    respx.post(webhook_url).mock(
+        return_value=httpx.Response(
+            422,
+            json={"detail": "Executor payload was invalid"},
+        )
+    )
+    settings = Settings(
+        _env_file=None,
+        langflow_execution_mode="webhook",
+        langflow_profile_webhook_url=webhook_url,
+    )
+    client = LangflowClient(settings)
+
+    try:
+        result = await client.run_agent(
+            agent_key="profile",
+            command=command(),
+            session_id="case-123:req-123",
+            expected_artifact_type="EMPLOYEE_PROFILE_CONTEXT",
+        )
+    finally:
+        await client.close()
+
+    assert result.status == "FAILED"
+    assert result.artifact_type == "EMPLOYEE_PROFILE_CONTEXT"
+    assert result.errors[0].code == "HTTP_422"
 
 
 @pytest.mark.asyncio
